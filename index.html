@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier Veleé - High Society Fashion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="#hero" class="brand-link">Atelier Veleé</a>
+            </div>
+            <div class="nav-right">
+                <div class="nav-links">
+                    <a href="#fashion-week" class="nav-link">Collections</a>
+                    <a href="#feature-collection" class="nav-link">Featured</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#fashion-week" class="mobile-link">Collections</a>
+        <a href="#feature-collection" class="mobile-link">Featured</a>
+        <a href="#seasonal-highlight" class="mobile-link">Seasonal</a>
+        <a href="#contact" class="mobile-link">Contact</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-background">
+            <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80" alt="Fashion Model" class="hero-image">
+        </div>
+        <div class="hero-content">
+            <h1 class="brand-title">Atelier Veleé</h1>
+            <p class="brand-subtitle">High Society Fashion</p>
+            <button class="cta-button">Get Started</button>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- Fashion Week Section -->
+    <section class="fashion-week" id="fashion-week">
+        <div class="container">
+            <div class="section-title-vertical">
+                <h2>Glamour</h2>
+            </div>
+            <div class="fashion-week-content">
+                <div class="text-content">
+                    <h3>Fashion Week</h3>
+                    <p>Atelier Veleé's debut at Paris Fashion Week showcased an extraordinary blend of avant-garde design and timeless elegance. Our collection captured the essence of modern luxury, presenting pieces that speak to the discerning individual who appreciates both innovation and heritage in fashion.</p>
+                </div>
+                <div class="image-grid">
+                    <div class="image-block">
+                        <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Fashion Week Model 1">
+                    </div>
+                    <div class="image-block">
+                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Fashion Week Model 2">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Collection -->
+    <section class="feature-collection" id="feature-collection">
+        <div class="container">
+            <div class="collection-layout">
+                <div class="collection-image">
+                    <img src="https://images.unsplash.com/photo-1490725263030-1f0521cec8ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Echoes of Opulence Model">
+                </div>
+                <div class="collection-content">
+                    <h2>Echoes of Opulence</h2>
+                    <h3>Grandeur</h3>
+                    <p>A celebration of luxurious textures and refined silhouettes, this collection draws inspiration from the golden age of haute couture. Each piece is meticulously crafted to embody sophistication while maintaining contemporary relevance for the modern connoisseur.</p>
+                    <button class="cta-button secondary">Explore Collection</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seasonal Highlight -->
+    <section class="seasonal-highlight" id="seasonal-highlight">
+        <div class="container">
+            <div class="seasonal-content">
+                <h2>Spring/Summer /22</h2>
+                <div class="seasonal-layout">
+                    <div class="seasonal-images">
+                        <div class="seasonal-tile">
+                            <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Spring Summer Collection 1">
+                        </div>
+                        <div class="seasonal-tile">
+                            <img src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Spring Summer Collection 2">
+                        </div>
+                    </div>
+                    <div class="seasonal-text">
+                        <p>Our latest collection embraces the lightness of spring with flowing fabrics and warm earth tones. Featuring hand-selected materials and artisanal craftsmanship, each piece reflects our commitment to sustainable luxury and timeless design.</p>
+                        <button class="cta-button tertiary">Find Out More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter / Contact -->
+    <section class="newsletter" id="contact">
+        <div class="container">
+            <div class="newsletter-layout">
+                <div class="newsletter-content">
+                    <h2>Keep In Touch</h2>
+                    <p>Stay informed about our latest collections, exclusive events, and behind-the-scenes insights from Atelier Veleé. Join our community of fashion enthusiasts.</p>
+                    <form class="newsletter-form" action="https://formsubmit.co/your-email@domain.com" method="POST">
+                        <div class="form-group">
+                            <input type="email" name="email" placeholder="Enter your email address" required>
+                            <button type="submit">Submit</button>
+                        </div>
+                        <input type="hidden" name="_captcha" value="false">
+                        <input type="hidden" name="_subject" value="New Newsletter Subscription - Atelier Veleé">
+                    </form>
+                </div>
+                <div class="newsletter-image">
+                    <img src="https://images.unsplash.com/photo-1506629905607-84d42cc28e9d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Lifestyle Photography">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Placeholder - Content will be injected via JavaScript -->
+    <footer-placeholder></footer-placeholder>
+
+    <script src="script.js?v=7"></script>
+</body>
+</html> 
