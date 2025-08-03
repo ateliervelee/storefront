@@ -7,23 +7,27 @@ const firebaseConfig = {
     messagingSenderId: "79320471162",
     appId: "1:79320471162:web:ff6d40757f46c7b6d80dc3",
     measurementId: "G-38WKQLDVM4"
-  };
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Initialize Firebase services
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
-const analytics = firebase.analytics();
-
-// Export Firebase services for use in other scripts
-window.firebaseServices = {
-    auth,
-    db,
-    storage,
-    analytics
 };
 
-console.log('🔥 Firebase initialized successfully'); 
+// Initialize Firebase
+try {
+    firebase.initializeApp(firebaseConfig);
+} catch (error) {
+    console.error('Firebase initialization failed:', error);
+}
+
+// Initialize Firebase services
+try {
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const analytics = firebase.analytics();
+
+    // Export Firebase services for use in other scripts
+    window.firebaseServices = {
+        auth,
+        db,
+        analytics
+    };
+} catch (error) {
+    console.error('Firebase services initialization failed:', error);
+} 

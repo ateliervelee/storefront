@@ -3,6 +3,8 @@
 
 class ScriptLoader {
     constructor() {
+        this.isAdminPage = window.location.pathname.includes('admin.html');
+        
         this.scripts = [
             // Firebase SDK (load first)
             {
@@ -21,11 +23,6 @@ class ScriptLoader {
                 defer: false
             },
             {
-                src: 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js',
-                async: false,
-                defer: false
-            },
-            {
                 src: 'https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js',
                 async: false,
                 defer: false
@@ -35,13 +32,23 @@ class ScriptLoader {
                 src: 'firebase-config.js',
                 async: false,
                 defer: false
-            },
-            {
+            }
+        ];
+        
+        // Add page-specific scripts
+        if (this.isAdminPage) {
+            this.scripts.push({
+                src: 'admin.js',
+                async: false,
+                defer: false
+            });
+        } else {
+            this.scripts.push({
                 src: 'script.js',
                 async: false,
                 defer: false
-            }
-        ];
+            });
+        }
         
         this.loadedScripts = 0;
         this.totalScripts = this.scripts.length;
@@ -70,7 +77,7 @@ class ScriptLoader {
     }
 
     async loadAllScripts() {
-        console.log('🚀 Starting script loading sequence...');
+        console.log(`🚀 Starting script loading sequence for ${this.isAdminPage ? 'admin' : 'main'} page...`);
         
         try {
             // Load scripts sequentially to ensure proper order
