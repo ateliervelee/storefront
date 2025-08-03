@@ -556,6 +556,35 @@ p {
     border-color: var(--warm-sand);
 }
 
+.form-group.message-group {
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--soft-beige);
+    background-color: var(--warm-white);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    outline: none;
+    transition: var(--smooth);
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.form-group textarea:focus {
+    border-color: var(--warm-sand);
+}
+
+.form-group textarea::placeholder {
+    color: var(--muted-gold);
+    font-style: italic;
+}
+
 .form-group button {
     padding: 1rem 2rem;
     background-color: var(--charcoal);
@@ -778,6 +807,15 @@ p {
     .form-group {
         flex-direction: column;
         gap: 1rem;
+    }
+    
+    .form-group.message-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group textarea {
+        min-height: 80px;
+        font-size: 0.85rem;
     }
     
     .brand-subtitle {

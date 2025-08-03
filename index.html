@@ -122,15 +122,20 @@
         <div class="container">
             <div class="newsletter-layout">
                 <div class="newsletter-content">
-                    <h2>Keep In Touch</h2>
-                    <p>Stay informed about our latest collections, exclusive events, and behind-the-scenes insights from Atelier Veleé. Join our community of fashion enthusiasts.</p>
-                    <form class="newsletter-form" action="https://formsubmit.co/your-email@domain.com" method="POST">
+                    <h2>Get In Touch</h2>
+                    <p>Stay informed about our latest collections, exclusive events, and behind-the-scenes insights from Atelier Veleé. Join our community of fashion enthusiasts or send us a message.</p>
+                    <form class="newsletter-form" action="https://formsubmit.co/info@ateliervelee.com" method="POST">
+                        <div class="form-group message-group">
+                            <textarea name="message" placeholder="Send us a message (optional)" rows="4"></textarea>
+                        </div>
                         <div class="form-group">
                             <input type="email" name="email" placeholder="Enter your email address" required>
-                            <button type="submit">Submit</button>
+                            <button type="submit">Send</button>
                         </div>
                         <input type="hidden" name="_captcha" value="false">
-                        <input type="hidden" name="_subject" value="New Newsletter Subscription - Atelier Veleé">
+                        <input type="hidden" name="_subject" value="New Contact Form Submission - Atelier Veleé">
+                        <input type="hidden" name="_template" value="table">
+                        <input type="hidden" name="_next" value="http://localhost:8000/thank-you.html">
                     </form>
                 </div>
                 <div class="newsletter-image">
