@@ -266,6 +266,12 @@ document.addEventListener('allScriptsLoaded', async () => {
     // Load footer component
     await loadComponent('footer.html', 'footer-placeholder');
     
+    // Set the current year in the footer
+    const currentYearElement = document.getElementById('currentYear');
+    if (currentYearElement) {
+        currentYearElement.textContent = new Date().getFullYear();
+    }
+    
     // Set initial navbar background state
     const navbar = document.querySelector('.navbar');
     const currentScrollY = window.scrollY;
