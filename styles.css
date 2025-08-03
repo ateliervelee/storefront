@@ -5,6 +5,22 @@
     box-sizing: border-box;
 }
 
+/* Remove all browser default focus outlines */
+*:focus {
+    outline: none !important;
+}
+
+*:focus-visible {
+    outline: none !important;
+}
+
+input:focus,
+textarea:focus,
+button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 :root {
     /* Color Palette - Warm Neutrals & Subtle Golds */
     --primary-cream: #F8F6F1;
@@ -541,7 +557,7 @@ p {
 }
 
 .form-group input {
-    flex: 1;
+    width: 100%;
     padding: 1rem 1.5rem;
     border: 1px solid var(--soft-beige);
     background-color: var(--warm-white);
@@ -550,15 +566,11 @@ p {
     color: var(--charcoal);
     outline: none;
     transition: var(--smooth);
+    border-radius: 0;
 }
 
 .form-group input:focus {
     border-color: var(--warm-sand);
-}
-
-.form-group.message-group {
-    display: block;
-    margin-bottom: 1.5rem;
 }
 
 .form-group textarea {
@@ -574,6 +586,8 @@ p {
     resize: vertical;
     min-height: 100px;
     line-height: 1.5;
+    border-radius: 0;
+    margin-bottom: 1rem;
 }
 
 .form-group textarea:focus {
@@ -581,8 +595,8 @@ p {
 }
 
 .form-group textarea::placeholder {
-    color: var(--muted-gold);
-    font-style: italic;
+    color: var(--deep-taupe);
+    font-style: normal;
 }
 
 .form-group button {
