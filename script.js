@@ -261,8 +261,8 @@ async function loadComponent(componentPath, placeholderSelector) {
     }
 }
 
-// Initialize animations when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
+// Initialize animations when DOM is loaded and all scripts are ready
+document.addEventListener('allScriptsLoaded', async () => {
     // Load footer component
     await loadComponent('footer.html', 'footer-placeholder');
     
@@ -287,6 +287,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         heroContent.style.transform = 'translateY(0)';
         heroContent.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
     }, 300);
+    
+    console.log('🎨 All animations and components initialized');
 });
 
 // Mouse cursor enhancement for interactive elements
