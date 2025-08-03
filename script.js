@@ -139,44 +139,6 @@ ctaButtons.forEach(button => {
     });
 });
 
-// Newsletter Form Enhancement
-const newsletterForm = document.querySelector('.newsletter-form');
-const emailInput = newsletterForm.querySelector('input[type="email"]');
-const submitButton = newsletterForm.querySelector('button[type="submit"]');
-
-// Add floating label effect
-emailInput.addEventListener('focus', () => {
-    emailInput.style.borderColor = '#C9B896';
-    emailInput.style.boxShadow = '0 0 0 2px rgba(201, 184, 150, 0.2)';
-});
-
-emailInput.addEventListener('blur', () => {
-    emailInput.style.borderColor = '#E8E3D8';
-    emailInput.style.boxShadow = 'none';
-});
-
-// Form submission handling
-newsletterForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const email = emailInput.value.trim();
-    if (email && email.includes('@')) {
-        // Animate button
-        submitButton.style.background = '#C9B896';
-        submitButton.textContent = 'Submitted!';
-        
-        // Reset after 2 seconds
-        setTimeout(() => {
-            submitButton.style.background = '#2C2A27';
-            submitButton.textContent = 'Submit';
-            emailInput.value = '';
-        }, 2000);
-        
-        // In a real application, you would submit the form here
-        console.log('Newsletter subscription:', email);
-    }
-});
-
 // Scroll Progress Indicator
 const scrollProgress = document.createElement('div');
 scrollProgress.style.cssText = `
@@ -337,4 +299,4 @@ interactiveElements.forEach(element => {
     element.addEventListener('mouseleave', () => {
         document.body.style.cursor = 'default';
     });
-}); 
+});
