@@ -6,6 +6,9 @@ on:
       - 'assets/images/**'
       - '.github/workflows/generate-image-index.yml'
 
+permissions:
+  contents: write
+  
 jobs:
   build:
     runs-on: ubuntu-latest
