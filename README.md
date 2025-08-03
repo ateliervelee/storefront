@@ -88,8 +88,11 @@ The website is fully responsive across all devices:
 3. **Customize images**: 
    - Replace Unsplash URLs with your own images
    - Maintain aspect ratios for best results
-4. **Open `index.html`** in your browser
-5. **For production**: Upload to your web hosting service
+4. **Favicon**: 
+   - Favicon files are located in `assets/favicon/`
+   - Created using [favicon.io](https://favicon.io)
+5. **Open `index.html`** in your browser
+6. **For production**: Upload to your web hosting service
 
 ## 📝 Customization
 
