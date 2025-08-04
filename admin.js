@@ -97,13 +97,17 @@ class AdminPanel {
         const loginDialog = document.getElementById('loginDialog');
         const welcomeMessage = document.getElementById('welcomeMessage');
         const userHeader = document.getElementById('userHeader');
+        const roleBadge = document.getElementById('roleBadge');
+        const accessDeniedElement = document.getElementById('accessDenied');
         
         if (loginDialog) loginDialog.style.display = 'block';
         if (welcomeMessage) welcomeMessage.classList.remove('show');
         if (userHeader) userHeader.classList.remove('show');
+        if (roleBadge) roleBadge.style.display = 'none';
+        if (accessDeniedElement) accessDeniedElement.classList.remove('show');
     }
 
-    showWelcomeMessage(user) {
+    async showWelcomeMessage(user) {
         const loginDialog = document.getElementById('loginDialog');
         const welcomeMessage = document.getElementById('welcomeMessage');
         const userHeader = document.getElementById('userHeader');
@@ -120,6 +124,73 @@ class AdminPanel {
         if (loginDialog) loginDialog.style.display = 'none';
         if (welcomeMessage) welcomeMessage.classList.remove('show');
         if (userHeader) userHeader.classList.add('show');
+
+        // Check if user is an administrator
+        await this.checkAdministratorAccess(user);
+    }
+
+    async checkAdministratorAccess(user) {
+        const db = window.firebaseServices.db;
+        const accessDeniedElement = document.getElementById('accessDenied');
+
+        try {
+            console.log(`🔍 Checking administrator access for: ${user.email}`);
+            
+            // Check if user document exists in administrators collection
+            const adminDoc = await db.collection('administrators').doc(user.email).get();
+            
+            if (adminDoc.exists) {
+                const adminData = adminDoc.data();
+                console.log('✅ User is verified administrator with role:', adminData.role);
+                this.showAdminAccess(adminData);
+            } else {
+                console.log('❌ User is not an administrator');
+                this.showAccessDenied(user.email);
+            }
+        } catch (error) {
+            // Handle Firebase permissions error (user doesn't have read access = not an admin)
+            if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
+                console.log('🚫 Access denied - Firebase security rules blocked access (user is not an admin)');
+                this.showAccessDenied(user.email);
+            } else {
+                // Handle other errors (network issues, etc.)
+                console.error('❌ System error checking administrator access:', error);
+                this.showError('Failed to verify administrator access due to a system error. Please try again.');
+            }
+        }
+    }
+
+    showAdminAccess(adminData) {
+        const roleBadge = document.getElementById('roleBadge');
+        const accessDeniedElement = document.getElementById('accessDenied');
+
+        // Update role badge with user's role from Firebase
+        if (roleBadge && adminData.role) {
+            roleBadge.textContent = adminData.role;
+            roleBadge.style.display = 'inline-block';
+        }
+
+        if (accessDeniedElement) {
+            accessDeniedElement.classList.remove('show');
+        }
+
+        console.log('🎉 Administrator access granted');
+    }
+
+    showAccessDenied(email) {
+        const roleBadge = document.getElementById('roleBadge');
+        const accessDeniedElement = document.getElementById('accessDenied');
+
+        // Hide role badge for denied users
+        if (roleBadge) {
+            roleBadge.style.display = 'none';
+        }
+
+        if (accessDeniedElement) {
+            accessDeniedElement.classList.add('show');
+        }
+
+        console.log(`🚫 Access denied for: ${email}`);
     }
 
     showLoading(show) {
