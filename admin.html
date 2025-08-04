@@ -232,6 +232,21 @@
             font-weight: 500;
         }
 
+        .role-badge {
+            background: linear-gradient(135deg, var(--muted-gold), var(--warm-sand));
+            color: var(--warm-white);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(212, 197, 160, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
         .sign-out-btn {
             display: flex;
             align-items: center;
@@ -265,6 +280,75 @@
             margin-top: 60px;
         }
 
+        /* Access Denied Styles */
+        .access-denied {
+            display: none;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .access-denied.show {
+            display: block;
+        }
+
+        .access-denied {
+            background: linear-gradient(135deg, #FAF3F3, #F5E8E8);
+            border: 2px solid #D4A574;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(212, 165, 116, 0.2);
+        }
+
+        .access-denied-content h2 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            color: #8B4B3C;
+            margin-bottom: 1rem;
+        }
+
+        .access-denied-content p {
+            color: var(--deep-taupe);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .denied-email {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .home-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--warm-sand);
+            color: var(--warm-white);
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .home-button:hover {
+            background: var(--deep-taupe);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .home-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .home-button:hover .home-icon {
+            transform: translateX(-2px);
+        }
+
         @media (max-width: 768px) {
             .login-dialog,
             .welcome-message {
@@ -287,6 +371,25 @@
                 font-size: 0.8rem;
                 padding: 0.4rem 0.8rem;
             }
+
+            .role-badge {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+            }
+
+            .access-denied {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .access-denied-content h2 {
+                font-size: 1.5rem;
+            }
+
+            .home-button {
+                font-size: 0.8rem;
+                padding: 0.6rem 1.2rem;
+            }
         }
     </style>
 </head>
@@ -297,6 +400,7 @@
             <div class="user-section">
                 <img class="user-avatar-small" id="userAvatarHeader" src="" alt="User Avatar">
                 <span class="user-name-header" id="userNameHeader">Admin</span>
+                <span class="role-badge" id="roleBadge">Admin</span>
             </div>
             <button class="sign-out-btn" id="signOutButton">
                 <svg class="sign-out-icon" viewBox="0 0 24 24" width="16" height="16">
@@ -345,6 +449,21 @@
             <button class="logout-button" id="logoutButton">
                 Sign Out
             </button>
+        </div>
+
+        <!-- Access Denied Message -->
+        <div class="access-denied" id="accessDenied">
+            <div class="access-denied-content">
+                <h2>Access Denied</h2>
+                <p>You are not authorized to access this admin panel. Your account does not have administrator privileges.</p>
+                <p class="denied-email">Please contact support if you believe this is an error.</p>
+                <button class="home-button" onclick="window.location.href='/'">
+                    <svg class="home-icon" viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                    Go to Home
+                </button>
+            </div>
         </div>
     </div>
 
