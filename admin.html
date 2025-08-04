@@ -184,6 +184,87 @@
             display: block;
         }
 
+        /* User Header Styles */
+        .user-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary-cream);
+            border-bottom: 1px solid var(--soft-beige);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-header.show {
+            display: block;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--muted-gold);
+            object-fit: cover;
+        }
+
+        .user-name-header {
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            color: var(--charcoal);
+            font-weight: 500;
+        }
+
+        .sign-out-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--warm-sand);
+            color: var(--warm-sand);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sign-out-btn:hover {
+            background: var(--warm-sand);
+            color: var(--warm-white);
+        }
+
+        .sign-out-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .sign-out-btn:hover .sign-out-icon {
+            transform: translateX(2px);
+        }
+
+        /* Adjust admin container when header is visible */
+        .user-header.show ~ .admin-container {
+            margin-top: 60px;
+        }
+
         @media (max-width: 768px) {
             .login-dialog,
             .welcome-message {
@@ -193,10 +274,39 @@
             .brand-title {
                 font-size: 2rem;
             }
+
+            .header-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .user-name-header {
+                font-size: 0.9rem;
+            }
+
+            .sign-out-btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- User Header (when logged in) -->
+    <header class="user-header" id="userHeader">
+        <div class="header-container">
+            <div class="user-section">
+                <img class="user-avatar-small" id="userAvatarHeader" src="" alt="User Avatar">
+                <span class="user-name-header" id="userNameHeader">Admin</span>
+            </div>
+            <button class="sign-out-btn" id="signOutButton">
+                <svg class="sign-out-icon" viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9Z"/>
+                </svg>
+                Sign Out
+            </button>
+        </div>
+    </header>
+
     <div class="admin-container">
         <!-- Login Dialog -->
         <div class="login-dialog" id="loginDialog">
