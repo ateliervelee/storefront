@@ -48,6 +48,7 @@ class AdminPanel {
     setupUI() {
         const loginButton = document.getElementById('loginButton');
         const logoutButton = document.getElementById('logoutButton');
+        const signOutButton = document.getElementById('signOutButton');
         const loading = document.getElementById('loading');
         const errorMessage = document.getElementById('errorMessage');
 
@@ -73,42 +74,52 @@ class AdminPanel {
             });
         }
 
-        // Sign Out
+        // Sign Out (both buttons)
+        const signOutHandler = async () => {
+            try {
+                await this.auth.signOut();
+            } catch (error) {
+                console.error('Logout error:', error);
+                this.showError('Failed to sign out. Please try again.');
+            }
+        };
+
         if (logoutButton) {
-            logoutButton.addEventListener('click', async () => {
-                try {
-                    await this.auth.signOut();
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    this.showError('Failed to sign out. Please try again.');
-                }
-            });
+            logoutButton.addEventListener('click', signOutHandler);
+        }
+
+        if (signOutButton) {
+            signOutButton.addEventListener('click', signOutHandler);
         }
     }
 
     showLoginDialog() {
         const loginDialog = document.getElementById('loginDialog');
         const welcomeMessage = document.getElementById('welcomeMessage');
+        const userHeader = document.getElementById('userHeader');
         
         if (loginDialog) loginDialog.style.display = 'block';
         if (welcomeMessage) welcomeMessage.classList.remove('show');
+        if (userHeader) userHeader.classList.remove('show');
     }
 
     showWelcomeMessage(user) {
         const loginDialog = document.getElementById('loginDialog');
         const welcomeMessage = document.getElementById('welcomeMessage');
-        const userAvatar = document.getElementById('userAvatar');
-        const userName = document.getElementById('userName');
-        const userEmail = document.getElementById('userEmail');
+        const userHeader = document.getElementById('userHeader');
+        const userAvatarHeader = document.getElementById('userAvatarHeader');
+        const userNameHeader = document.getElementById('userNameHeader');
 
-        // Update user info
-        if (userAvatar) userAvatar.src = user.photoURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNFOEUzRDgiLz4KPHBhdGggZD0iTTQwIDQwQzQ0LjQxODMgNDAgNDggMzYuNDE4MyA0OCAzMkM0OCAyNy41ODE3IDQ0LjQxODMgMjQgNDAgMjRDMzUuNTgxNyAyNCAzMiAyNy41ODE3IDMyIDMyQzMyIDM2LjQxODMgMzUuNTgxNyA0MCA0MCA0MFoiIGZpbGw9IiM4QjdENkIiLz4KPHBhdGggZD0iTTQwIDQ4QzI5LjUgNDggMjAgNTcuNSAyMCA2N0gyMEMyMCA2NyAyMCA2OCAyMCA2OEMyMCA3Mi40MTgzIDIzLjU4MTcgNzYgMjggNzZINTJDNjYuNTgxNyA3NiA3MCA3Mi40MTgzIDcwIDY4QzcwIDY3IDcwIDY3IDcwIDY3SDYwQzYwIDU3LjUgNTAuNSA0OCA0MCA0OFoiIGZpbGw9IiM4QjdENkIiLz4KPC9zdmc+';
-        if (userName) userName.textContent = user.displayName || 'Admin User';
-        if (userEmail) userEmail.textContent = user.email;
+        // Update user header info
+        if (userAvatarHeader) {
+            userAvatarHeader.src = user.photoURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNFOEUzRDgiLz4KPHBhdGggZD0iTTQwIDQwQzQ0LjQxODMgNDAgNDggMzYuNDE4MyA0OCAzMkM0OCAyNy41ODE3IDQ0LjQxODMgMjQgNDAgMjRDMzUuNTgxNyAyNCAzMiAyNy41ODE3IDMyIDMyQzMyIDM2LjQxODMgMzUuNTgxNyA0MCA0MCA0MFoiIGZpbGw9IiM4QjdENkIiLz4KPHBhdGggZD0iTTQwIDQ4QzI5LjUgNDggMjAgNTcuNSAyMCA2N0gyMEMyMCA2NyAyMCA2OCAyMCA2OEMyMCA3Mi40MTgzIDIzLjU4MTcgNzYgMjggNzZINTJDNjYuNTgxNyA3NiA3MCA3Mi40MTgzIDcwIDY4QzcwIDY3IDcwIDY3IDcwIDY3SDYwQzYwIDU3LjUgNTAuNSA0OCA0MCA0OFoiIGZpbGw9IiM4QjdENkIiLz4KPC9zdmc+';
+        }
+        if (userNameHeader) userNameHeader.textContent = user.displayName || 'Admin User';
 
-        // Show welcome message
+        // Hide login dialog and welcome message, show user header
         if (loginDialog) loginDialog.style.display = 'none';
-        if (welcomeMessage) welcomeMessage.classList.add('show');
+        if (welcomeMessage) welcomeMessage.classList.remove('show');
+        if (userHeader) userHeader.classList.add('show');
     }
 
     showLoading(show) {
