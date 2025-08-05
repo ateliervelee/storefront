@@ -294,7 +294,7 @@ class AdminPanel {
             <div class="modal-overlay"></div>
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Edit Product</h2>
+                    <h2>Edit Product: ${product.name || 'Untitled'}</h2>
                     <button class="modal-close" id="modalClose">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -306,7 +306,12 @@ class AdminPanel {
                             </div>
                             <div class="form-group">
                                 <label for="productCategory">Category</label>
-                                <input type="text" id="productCategory" value="${product.category || ''}" required>
+                                <select id="productCategory" required>
+                                    <option value="">Select Category</option>
+                                    ${PRODUCT_CONSTANTS.categories.map(cat => 
+                                        `<option value="${cat.value}" ${product.category === cat.value ? 'selected' : ''}>${cat.label}</option>`
+                                    ).join('')}
+                                </select>
                             </div>
                         </div>
                         
@@ -317,15 +322,15 @@ class AdminPanel {
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="productPrice">Price</label>
-                                <input type="number" id="productPrice" step="0.01" value="${product.price || ''}" required>
+                                <label for="productPrice">Price (in cents)</label>
+                                <input type="number" id="productPrice" step="1" value="${product.price || ''}" required>
                             </div>
                             <div class="form-group">
                                 <label for="productCurrency">Currency</label>
                                 <select id="productCurrency">
-                                    <option value="EUR" ${product.currency === 'EUR' ? 'selected' : ''}>EUR</option>
-                                    <option value="USD" ${product.currency === 'USD' ? 'selected' : ''}>USD</option>
-                                    <option value="GBP" ${product.currency === 'GBP' ? 'selected' : ''}>GBP</option>
+                                    ${PRODUCT_CONSTANTS.currencies.map(curr => 
+                                        `<option value="${curr.value}" ${product.currency === curr.value ? 'selected' : ''}>${curr.label}</option>`
+                                    ).join('')}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -338,9 +343,9 @@ class AdminPanel {
                             <div class="form-group">
                                 <label for="productStatus">Status</label>
                                 <select id="productStatus">
-                                    <option value="public" ${product.status === 'public' ? 'selected' : ''}>Public</option>
-                                    <option value="draft" ${product.status === 'draft' ? 'selected' : ''}>Draft</option>
-                                    <option value="archived" ${product.status === 'archived' ? 'selected' : ''}>Archived</option>
+                                    ${PRODUCT_CONSTANTS.statuses.map(status => 
+                                        `<option value="${status.value}" ${product.status === status.value ? 'selected' : ''}>${status.label}</option>`
+                                    ).join('')}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -359,13 +364,33 @@ class AdminPanel {
                         </div>
                         
                         <div class="form-group">
-                            <label for="productSizes">Available Sizes (comma-separated)</label>
-                            <input type="text" id="productSizes" value="${product.availableSizes ? product.availableSizes.join(', ') : ''}">
+                            <label>Available Sizes</label>
+                            <div class="checkbox-group sizes-group">
+                                ${PRODUCT_CONSTANTS.sizes.map(size => {
+                                    const isChecked = product.availableSizes && product.availableSizes.includes(size.value);
+                                    return `
+                                        <label class="checkbox-item">
+                                            <input type="checkbox" value="${size.value}" ${isChecked ? 'checked' : ''}>
+                                            <span>${size.label}</span>
+                                        </label>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="productColors">Available Colors (comma-separated)</label>
-                            <input type="text" id="productColors" value="${product.availableColors ? product.availableColors.join(', ') : ''}">
+                            <label>Available Colors</label>
+                            <div class="checkbox-group colors-group">
+                                ${PRODUCT_CONSTANTS.colors.map(color => {
+                                    const isChecked = product.availableColors && product.availableColors.includes(color.value);
+                                    return `
+                                        <label class="checkbox-item">
+                                            <input type="checkbox" value="${color.value}" ${isChecked ? 'checked' : ''}>
+                                            <span>${color.label}</span>
+                                        </label>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
                         
                         <div class="form-group">
@@ -423,8 +448,8 @@ class AdminPanel {
                     care: form.querySelector('#productCare').value
                 },
                 tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
-                availableSizes: form.querySelector('#productSizes').value.split(',').map(size => size.trim()).filter(size => size),
-                availableColors: form.querySelector('#productColors').value.split(',').map(color => color.trim()).filter(color => color),
+                availableSizes: Array.from(form.querySelectorAll('.sizes-group input[type="checkbox"]:checked')).map(input => input.value),
+                availableColors: Array.from(form.querySelectorAll('.colors-group input[type="checkbox"]:checked')).map(input => input.value),
                 images: form.querySelector('#productImages').value.split('\n').map(url => url.trim()).filter(url => url),
                 updatedAt: new Date()
             };
