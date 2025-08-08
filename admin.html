@@ -454,11 +454,14 @@
             margin-top: 0;
         }
 
-        .products-header {
-            border-bottom: 1px solid var(--soft-beige);
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-        }
+                 .products-header {
+             border-bottom: 1px solid var(--soft-beige);
+             padding-bottom: 1rem;
+             margin-bottom: 2rem;
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+         }
 
         .products-header h2 {
             font-family: var(--font-serif);
@@ -548,10 +551,63 @@
             margin-bottom: 0.25rem;
         }
 
-        .product-stock {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
+                 .product-stock {
+             font-size: 0.7rem;
+             color: rgba(255, 255, 255, 0.8);
+         }
+
+         .product-colors,
+         .product-sizes {
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+             margin-bottom: 0.25rem;
+         }
+
+         .colors-label,
+         .sizes-label {
+             font-size: 0.7rem;
+             color: rgba(255, 255, 255, 0.8);
+             min-width: 45px;
+         }
+
+         .colors-list {
+             display: flex;
+             gap: 0.25rem;
+             align-items: center;
+         }
+
+         .color-circle {
+             width: 12px;
+             height: 12px;
+             border-radius: 50%;
+             border: 1px solid rgba(255, 255, 255, 0.3);
+             display: inline-block;
+             position: relative;
+         }
+
+         .color-circle[data-color="black"] { background-color: #000000; }
+         .color-circle[data-color="white"] { background-color: #ffffff; border-color: rgba(0, 0, 0, 0.2); }
+         .color-circle[data-color="navy"] { background-color: #001f3f; }
+         .color-circle[data-color="red"] { background-color: #dc3545; }
+         .color-circle[data-color="blue"] { background-color: #007bff; }
+         .color-circle[data-color="green"] { background-color: #28a745; }
+         .color-circle[data-color="pink"] { background-color: #e91e63; }
+         .color-circle[data-color="beige"] { background-color: #f5f5dc; border-color: rgba(0, 0, 0, 0.2); }
+         .color-circle[data-color="brown"] { background-color: #8b4513; }
+         .color-circle[data-color="gray"] { background-color: #6c757d; }
+
+         .sizes-list {
+             font-size: 0.7rem;
+             color: rgba(255, 255, 255, 0.9);
+             font-weight: 500;
+         }
+
+         .no-colors {
+             font-size: 0.7rem;
+             color: rgba(255, 255, 255, 0.6);
+             font-style: italic;
+         }
 
         .product-card .actions {
             display: flex;
@@ -750,26 +806,33 @@
             color: var(--charcoal);
         }
 
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--soft-beige);
-        }
+                 .form-actions {
+             display: flex;
+             gap: 1rem;
+             justify-content: flex-end;
+             align-items: flex-start;
+             margin-top: 2rem;
+             padding-top: 1rem;
+             border-top: 1px solid var(--soft-beige);
+         }
 
-        .btn-primary,
-        .btn-secondary {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-family: var(--font-sans);
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--smooth);
-        }
+                 .btn-primary,
+         .btn-secondary {
+             padding: 0.75rem 1.5rem;
+             border: none;
+             border-radius: 8px;
+             font-family: var(--font-sans);
+             font-size: 0.9rem;
+             font-weight: 500;
+             cursor: pointer;
+             transition: var(--smooth);
+             height: 44px;
+             min-height: 44px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             flex-shrink: 0;
+         }
 
         .btn-primary {
             background: var(--charcoal);
@@ -786,10 +849,123 @@
             color: var(--charcoal);
         }
 
-        .btn-secondary:hover {
-            background: var(--muted-gold);
-            transform: translateY(-2px);
-        }
+                 .btn-secondary:hover {
+             background: var(--muted-gold);
+             transform: translateY(-2px);
+         }
+
+         .btn-primary:disabled,
+         .btn-secondary:disabled {
+             opacity: 0.6;
+             cursor: not-allowed;
+             transform: none;
+         }
+
+         .btn-primary.loading {
+             background: var(--deep-taupe);
+             cursor: not-allowed;
+         }
+
+         .loading-spinner {
+             display: inline-block;
+             width: 14px;
+             height: 14px;
+             border: 2px solid rgba(255, 255, 255, 0.3);
+             border-radius: 50%;
+             border-top-color: white;
+             animation: spin 0.8s linear infinite;
+             margin-right: 0.5rem;
+             vertical-align: middle;
+         }
+
+         @keyframes spin {
+             to {
+                 transform: rotate(360deg);
+             }
+         }
+
+         .btn-danger {
+             background: #dc3545;
+             color: white;
+             padding: 0.5rem 1rem;
+             border: none;
+             border-radius: 6px;
+             font-family: var(--font-sans);
+             font-size: 0.8rem;
+             font-weight: 500;
+             cursor: pointer;
+             transition: var(--smooth);
+         }
+
+         .btn-danger:hover {
+             background: #c82333;
+             transform: translateY(-1px);
+         }
+
+         /* Form Sections */
+         .form-section {
+             margin-bottom: 2rem;
+             padding: 1.5rem;
+             border: 1px solid var(--soft-beige);
+             border-radius: 12px;
+             background: var(--primary-cream);
+         }
+
+         .form-section h3 {
+             font-family: var(--font-serif);
+             font-size: 1.2rem;
+             color: var(--charcoal);
+             margin-bottom: 1rem;
+             border-bottom: 1px solid var(--soft-beige);
+             padding-bottom: 0.5rem;
+         }
+
+         /* Variants */
+         .variants-header {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             margin-bottom: 1rem;
+         }
+
+         .variants-header h3 {
+             margin-bottom: 0;
+             border-bottom: none;
+             padding-bottom: 0;
+         }
+
+         .variant-card {
+             background: var(--warm-white);
+             border: 1px solid var(--soft-beige);
+             border-radius: 8px;
+             padding: 1.5rem;
+             margin-bottom: 1rem;
+         }
+
+         .variant-header {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             margin-bottom: 1rem;
+             padding-bottom: 0.5rem;
+             border-bottom: 1px solid var(--soft-beige);
+         }
+
+         .variant-header h4 {
+             font-family: var(--font-serif);
+             font-size: 1rem;
+             color: var(--charcoal);
+             margin: 0;
+         }
+
+         .no-variants {
+             text-align: center;
+             color: var(--deep-taupe);
+             font-style: italic;
+             padding: 2rem;
+             background: var(--soft-beige);
+             border-radius: 8px;
+         }
 
         /* Success Notification Animation */
         @keyframes slideIn {
@@ -993,10 +1169,13 @@
 
         <!-- Products Section (Only visible when authenticated) -->
         <div class="products-section" id="productsSection" style="display: none;">
-            <div class="products-header">
-                <h2>Product Management</h2>
-                <p>Manage your product catalog</p>
-            </div>
+                     <div class="products-header">
+             <div>
+                 <h2>Product Management</h2>
+                 <p>Manage your product catalog</p>
+             </div>
+             <button class="gallery-btn" id="addProductBtn">Add New Product</button>
+         </div>
             
             <div class="products-container" id="productsContainer">
                 <!-- Products will be loaded here -->
