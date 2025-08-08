@@ -189,25 +189,52 @@ class AdminPanel {
     async loadAdminContent() {
         console.log('📦 Loading admin content...');
         await this.fetchProducts();
+        this.setupProductActions();
+    }
+
+    setupProductActions() {
+        const addProductBtn = document.getElementById('addProductBtn');
+        if (addProductBtn) {
+            addProductBtn.addEventListener('click', () => {
+                this.openNewProductForm();
+            });
+        }
     }
 
     async fetchProducts() {
         const db = window.firebaseServices.db;
         
         try {
-            console.log('🔄 Fetching products from Firestore...');
+            console.log('🔄 Fetching products with variants from Firestore...');
             
             const productsSnapshot = await db.collection('products').get();
             const products = [];
             
-            productsSnapshot.forEach(doc => {
-                products.push({
-                    id: doc.id,
-                    ...doc.data()
+            // Fetch each product with its variants
+            for (const productDoc of productsSnapshot.docs) {
+                const productData = {
+                    id: productDoc.id,
+                    ...productDoc.data(),
+                    variants: []
+                };
+                
+                // Fetch variants for this product
+                const variantsSnapshot = await db.collection('products')
+                    .doc(productDoc.id)
+                    .collection('variants')
+                    .get();
+                
+                variantsSnapshot.forEach(variantDoc => {
+                    productData.variants.push({
+                        id: variantDoc.id,
+                        ...variantDoc.data()
+                    });
                 });
-            });
+                
+                products.push(productData);
+            }
             
-            console.log(`✅ Fetched ${products.length} products`);
+            console.log(`✅ Fetched ${products.length} products with variants`);
             this.displayProducts(products);
             
         } catch (error) {
@@ -245,8 +272,22 @@ class AdminPanel {
             ? product.images[0] 
             : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU0IiBoZWlnaHQ9IjI1NCIgdmlld0JveD0iMCAwIDI1NCAyNTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyNTQiIGhlaWdodD0iMjU0IiBmaWxsPSIjRThFM0Q4Ii8+CjxwYXRoIGQ9Ik0xMjcgMTI3QzEzMS40MTggMTI3IDEzNSAxMjMuNDE4IDEzNSAxMTlDMTM1IDExNC41ODE3IDQ0LjQxODMgMjQgMTI3IDExMUMxMjIuNTgyIDExMSAxMTkgMTE0LjU4MiAxMTkgMTE5QzExOSAxMjMuNDE4IDEyMi41ODIgMTI3IDEyNyAxMjdaIiBmaWxsPSIjOEI3RDZCIi8+CjxwYXRoIGQ9Ik0xMjcgMTM1QzExNi41IDEzNSAxMDcgMTQ0LjUgMTA3IDE1NEgxMDdDMTEwIDE1NCAxMTAgMTU1IDExMCAxNTZDMTA3IDE2MC40MTggMTEwLjU4MiAxNjQgMTE1IDE2NEgxMzlDMTQzLjQxOCAxNjQgMTQ3IDE2MC40MTggMTQ3IDE1NkMxNDcgMTU1IDE0NyAxNTQgMTQ3IDE1NEgxNDdDMTQ3IDE0NC41IDEzNy41IDEzNSAxMjcgMTM1WiIgZmlsbD0iIzhCN0Q2QiIvPgo8L3N2Zz4K';
 
-        // Format price for display (add comma for cents)
-        const formattedPrice = this.formatPriceForDisplay(product.price, product.currency);
+        // Calculate aggregate data from variants
+        const totalStock = product.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0);
+        const priceRange = this.calculatePriceRange(product.variants);
+        const variantCount = product.variants.length;
+        
+        // Get unique colors and sizes from variants
+        const availableColors = [...new Set(product.variants.map(v => v.color).filter(Boolean))];
+        const availableSizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))].sort();
+        
+        // Generate color circles
+        const colorCircles = availableColors.map(color => 
+            `<span class="color-circle" data-color="${color}" title="${color}"></span>`
+        ).join('');
+        
+        // Generate sizes list
+        const sizesList = availableSizes.join(', ');
 
         card.innerHTML = `
             <div class="product-image">
@@ -254,8 +295,16 @@ class AdminPanel {
                 <div class="product-overlay">
                     <h3 class="product-name">${product.name}</h3>
                     <p class="product-category">${product.category || 'No category'}</p>
-                    <p class="product-price">${formattedPrice}</p>
-                    <p class="product-stock">Stock: ${product.stock || 0}</p>
+                    <p class="product-price">${priceRange}</p>
+                    <div class="product-colors">
+                        <span class="colors-label">Colors:</span>
+                        <div class="colors-list">${colorCircles || '<span class="no-colors">No colors</span>'}</div>
+                    </div>
+                    <div class="product-sizes">
+                        <span class="sizes-label">Sizes:</span>
+                        <span class="sizes-list">${sizesList || 'No sizes'}</span>
+                    </div>
+                    <p class="product-stock">Total Stock: ${totalStock}</p>
                 </div>
             </div>
         `;
@@ -268,25 +317,131 @@ class AdminPanel {
         return card;
     }
 
-    formatPriceForDisplay(price, currency = 'EUR') {
-        if (!price || price === 'N/A') return `${currency} N/A`;
-        
-        // Convert to number if it's a string
-        const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-        
-        if (isNaN(numPrice)) return `${currency} N/A`;
-        
-        // Convert to string and add comma before last two digits
-        const priceStr = numPrice.toString();
-        if (priceStr.length <= 2) {
-            return `${currency} ${priceStr}`;
+    calculatePriceRange(variants) {
+        if (!variants || variants.length === 0) {
+            return 'No variants';
         }
-        
-        const formattedPrice = priceStr.slice(0, -2) + ',' + priceStr.slice(-2);
-        return `${currency} ${formattedPrice}`;
+
+        const prices = variants
+            .map(v => v.price)
+            .filter(p => p !== undefined && p !== null && !isNaN(p))
+            .sort((a, b) => a - b);
+
+        if (prices.length === 0) {
+            return 'Price N/A';
+        }
+
+        const currency = variants[0].currency || 'USD';
+        const formatPrice = (price) => {
+            const dollars = Math.floor(price / 100);
+            const cents = price % 100;
+            return `${currency} ${dollars}.${cents.toString().padStart(2, '0')}`;
+        };
+
+        if (prices.length === 1) {
+            return formatPrice(prices[0]);
+        }
+
+        const minPrice = prices[0];
+        const maxPrice = prices[prices.length - 1];
+
+        if (minPrice === maxPrice) {
+            return formatPrice(minPrice);
+        }
+
+        return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
     }
 
-    openProductEditForm(product) {
+    renderVariants(variants) {
+        if (!variants || variants.length === 0) {
+            return '<p class="no-variants">No variants yet. Click "Add New Variant" to create one.</p>';
+        }
+
+        return variants.map((variant, index) => this.renderVariantForm(variant, index)).join('');
+    }
+
+    renderVariantForm(variant = {}, index = 0) {
+        const variantId = variant.id || `new-${Date.now()}-${index}`;
+        
+        return `
+            <div class="variant-card" data-variant-id="${variantId}">
+                <div class="variant-header">
+                    <h4>Variant ${index + 1}</h4>
+                    <button type="button" class="btn-danger remove-variant" onclick="this.closest('.variant-card').remove()">
+                        Remove
+                    </button>
+                </div>
+                <div class="variant-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Size</label>
+                            <select name="variant-size" required>
+                                <option value="">Select Size</option>
+                                ${PRODUCT_CONSTANTS.sizes.map(size => 
+                                    `<option value="${size.value}" ${variant.size === size.value ? 'selected' : ''}>${size.label}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Color</label>
+                            <select name="variant-color" required>
+                                <option value="">Select Color</option>
+                                ${PRODUCT_CONSTANTS.colors.map(color => 
+                                    `<option value="${color.value}" ${variant.color === color.value ? 'selected' : ''}>${color.label}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>SKU</label>
+                            <input type="text" name="variant-sku" value="${variant.sku || ''}" placeholder="Leave empty for auto-generation">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Price (in cents)</label>
+                            <input type="number" name="variant-price" step="1" value="${variant.price || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Currency</label>
+                            <select name="variant-currency">
+                                ${PRODUCT_CONSTANTS.currencies.map(curr => 
+                                    `<option value="${curr.value}" ${variant.currency === curr.value ? 'selected' : ''}>${curr.label}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" name="variant-quantity" value="${variant.quantity || 0}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    addVariantToForm() {
+        const container = document.getElementById('variantsContainer');
+        const noVariantsMsg = container.querySelector('.no-variants');
+        
+        if (noVariantsMsg) {
+            noVariantsMsg.remove();
+        }
+        
+        const existingVariants = container.querySelectorAll('.variant-card');
+        const newIndex = existingVariants.length;
+        
+        const variantHtml = this.renderVariantForm({}, newIndex);
+        container.insertAdjacentHTML('beforeend', variantHtml);
+        
+        // Auto-focus on the first input of the new variant
+        const newVariant = container.lastElementChild;
+        const firstInput = newVariant.querySelector('select[name="variant-size"]');
+        if (firstInput) {
+            firstInput.focus();
+        }
+    }
+
+    openProductEditForm(product, isNew = false) {
         // Create modal overlay
         const modal = document.createElement('div');
         modal.className = 'product-modal';
@@ -294,113 +449,75 @@ class AdminPanel {
             <div class="modal-overlay"></div>
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Edit Product: ${product.name || 'Untitled'}</h2>
+                    <h2>${isNew ? 'Create New Product' : `Edit Product: ${product.name || 'Untitled'}`}</h2>
                     <button class="modal-close" id="modalClose">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form id="productEditForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="productName">Product Name</label>
-                                <input type="text" id="productName" value="${product.name || ''}" required>
+                        <!-- Product Base Information -->
+                        <div class="form-section">
+                            <h3>Product Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productName">Product Name</label>
+                                    <input type="text" id="productName" value="${product.name || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="productSlug">Slug</label>
+                                    <input type="text" id="productSlug" value="${product.slug || ''}" required>
+                                </div>
                             </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productCategory">Category</label>
+                                    <select id="productCategory" required>
+                                        <option value="">Select Category</option>
+                                        ${PRODUCT_CONSTANTS.categories.map(cat => 
+                                            `<option value="${cat.value}" ${product.category === cat.value ? 'selected' : ''}>${cat.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="productStatus">Status</label>
+                                    <select id="productStatus">
+                                        ${PRODUCT_CONSTANTS.statuses.map(status => 
+                                            `<option value="${status.value}" ${product.status === status.value ? 'selected' : ''}>${status.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            
                             <div class="form-group">
-                                <label for="productCategory">Category</label>
-                                <select id="productCategory" required>
-                                    <option value="">Select Category</option>
-                                    ${PRODUCT_CONSTANTS.categories.map(cat => 
-                                        `<option value="${cat.value}" ${product.category === cat.value ? 'selected' : ''}>${cat.label}</option>`
-                                    ).join('')}
-                                </select>
+                                <label for="productDescription">Description</label>
+                                <textarea id="productDescription" rows="3" required>${product.description || ''}</textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productTags">Tags (comma-separated)</label>
+                                <input type="text" id="productTags" value="${product.tags ? product.tags.join(', ') : ''}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productImages">Image URLs (one per line)</label>
+                                <textarea id="productImages" rows="3">${product.images ? product.images.join('\n') : ''}</textarea>
                             </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="productDescription">Description</label>
-                            <textarea id="productDescription" rows="3" required>${product.description || ''}</textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="productPrice">Price (in cents)</label>
-                                <input type="number" id="productPrice" step="1" value="${product.price || ''}" required>
+
+                        <!-- Product Variants -->
+                        <div class="form-section">
+                            <div class="variants-header">
+                                <h3>Product Variants</h3>
+                                <button type="button" class="btn-secondary" id="addVariantBtn">Add New Variant</button>
                             </div>
-                            <div class="form-group">
-                                <label for="productCurrency">Currency</label>
-                                <select id="productCurrency">
-                                    ${PRODUCT_CONSTANTS.currencies.map(curr => 
-                                        `<option value="${curr.value}" ${product.currency === curr.value ? 'selected' : ''}>${curr.label}</option>`
-                                    ).join('')}
-                                </select>
+                            <div id="variantsContainer">
+                                ${this.renderVariants(product.variants || [])}
                             </div>
-                            <div class="form-group">
-                                <label for="productStock">Stock</label>
-                                <input type="number" id="productStock" value="${product.stock || 0}" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="productStatus">Status</label>
-                                <select id="productStatus">
-                                    ${PRODUCT_CONSTANTS.statuses.map(status => 
-                                        `<option value="${status.value}" ${product.status === status.value ? 'selected' : ''}>${status.label}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="productMaterial">Material</label>
-                                <input type="text" id="productMaterial" value="${product.specs?.material || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label for="productCare">Care Instructions</label>
-                                <input type="text" id="productCare" value="${product.specs?.care || ''}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productTags">Tags (comma-separated)</label>
-                            <input type="text" id="productTags" value="${product.tags ? product.tags.join(', ') : ''}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Available Sizes</label>
-                            <div class="checkbox-group sizes-group">
-                                ${PRODUCT_CONSTANTS.sizes.map(size => {
-                                    const isChecked = product.availableSizes && product.availableSizes.includes(size.value);
-                                    return `
-                                        <label class="checkbox-item">
-                                            <input type="checkbox" value="${size.value}" ${isChecked ? 'checked' : ''}>
-                                            <span>${size.label}</span>
-                                        </label>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Available Colors</label>
-                            <div class="checkbox-group colors-group">
-                                ${PRODUCT_CONSTANTS.colors.map(color => {
-                                    const isChecked = product.availableColors && product.availableColors.includes(color.value);
-                                    return `
-                                        <label class="checkbox-item">
-                                            <input type="checkbox" value="${color.value}" ${isChecked ? 'checked' : ''}>
-                                            <span>${color.label}</span>
-                                        </label>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productImages">Image URLs (one per line)</label>
-                            <textarea id="productImages" rows="3">${product.images ? product.images.join('\n') : ''}</textarea>
                         </div>
                         
                         <div class="form-actions">
                             <button type="button" class="btn-secondary" id="cancelEdit">Cancel</button>
-                            <button type="submit" class="btn-primary">Save Changes</button>
+                            <button type="submit" class="btn-primary">${isNew ? 'Create Product' : 'Save Changes'}</button>
                         </div>
                     </form>
                 </div>
@@ -414,6 +531,7 @@ class AdminPanel {
         const cancelBtn = modal.querySelector('#cancelEdit');
         const form = modal.querySelector('#productEditForm');
         const overlay = modal.querySelector('.modal-overlay');
+        const addVariantBtn = modal.querySelector('#addVariantBtn');
 
         const closeModal = () => {
             document.body.removeChild(modal);
@@ -423,10 +541,34 @@ class AdminPanel {
         cancelBtn.addEventListener('click', closeModal);
         overlay.addEventListener('click', closeModal);
 
+        // Add variant functionality
+        addVariantBtn.addEventListener('click', () => {
+            this.addVariantToForm();
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await this.saveProductChanges(product.id, form);
-            closeModal();
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            // Set loading state
+            this.setFormLoading(form, true);
+            
+            try {
+                if (isNew) {
+                    await this.createNewProduct(form);
+                } else {
+                    await this.saveProductChanges(product.id, form);
+                }
+                closeModal();
+            } catch (error) {
+                // Error handling is done in the individual methods
+                console.error('Form submission error:', error);
+            } finally {
+                // Reset loading state
+                this.setFormLoading(form, false);
+            }
         });
     }
 
@@ -434,31 +576,93 @@ class AdminPanel {
         const db = window.firebaseServices.db;
         
         try {
-            // Collect form data
-            const formData = {
+            // Collect product base data
+            const productData = {
                 name: form.querySelector('#productName').value,
+                slug: form.querySelector('#productSlug').value,
                 category: form.querySelector('#productCategory').value,
                 description: form.querySelector('#productDescription').value,
-                price: parseFloat(form.querySelector('#productPrice').value),
-                currency: form.querySelector('#productCurrency').value,
-                stock: parseInt(form.querySelector('#productStock').value),
                 status: form.querySelector('#productStatus').value,
-                specs: {
-                    material: form.querySelector('#productMaterial').value,
-                    care: form.querySelector('#productCare').value
-                },
                 tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
-                availableSizes: Array.from(form.querySelectorAll('.sizes-group input[type="checkbox"]:checked')).map(input => input.value),
-                availableColors: Array.from(form.querySelectorAll('.colors-group input[type="checkbox"]:checked')).map(input => input.value),
                 images: form.querySelector('#productImages').value.split('\n').map(url => url.trim()).filter(url => url),
                 updatedAt: new Date()
             };
 
-            // Update product in Firestore
-            await db.collection('products').doc(productId).update(formData);
+            // Collect variants data
+            const variantCards = form.querySelectorAll('.variant-card');
+            const variants = [];
             
-            console.log('✅ Product updated successfully');
-            this.showSuccess('Product updated successfully!');
+            variantCards.forEach(card => {
+                const size = card.querySelector('[name="variant-size"]').value;
+                const color = card.querySelector('[name="variant-color"]').value;
+                const price = parseInt(card.querySelector('[name="variant-price"]').value);
+                const currency = card.querySelector('[name="variant-currency"]').value;
+                const quantity = parseInt(card.querySelector('[name="variant-quantity"]').value);
+                
+                if (size && color && !isNaN(price) && !isNaN(quantity)) {
+                    // Use manual SKU or generate if empty
+                    let sku = card.querySelector('[name="variant-sku"]').value.trim();
+                    if (!sku) {
+                        sku = this.generateSKU(productData.name, color, size);
+                    }
+                    
+                    variants.push({
+                        id: card.dataset.variantId,
+                        size,
+                        color,
+                        sku,
+                        price,
+                        currency,
+                        quantity,
+                        updatedAt: new Date()
+                    });
+                }
+            });
+
+            // Update product in Firestore
+            await db.collection('products').doc(productId).update(productData);
+            
+            // Get existing variants to determine which ones to delete
+            const existingVariantsSnapshot = await db.collection('products')
+                .doc(productId)
+                .collection('variants')
+                .get();
+            
+            const existingVariantIds = existingVariantsSnapshot.docs.map(doc => doc.id);
+            const newVariantIds = variants.map(v => v.id).filter(id => !id.startsWith('new-'));
+            
+            // Delete removed variants
+            const variantsToDelete = existingVariantIds.filter(id => !newVariantIds.includes(id));
+            for (const variantId of variantsToDelete) {
+                await db.collection('products')
+                    .doc(productId)
+                    .collection('variants')
+                    .doc(variantId)
+                    .delete();
+            }
+            
+            // Save/update variants
+            for (const variant of variants) {
+                const variantRef = db.collection('products')
+                    .doc(productId)
+                    .collection('variants');
+                
+                if (variant.id.startsWith('new-')) {
+                    // Create new variant
+                    const docRef = await variantRef.add({
+                        ...variant,
+                        createdAt: new Date()
+                    });
+                    console.log(`✅ Created new variant: ${docRef.id}`);
+                } else {
+                    // Update existing variant
+                    await variantRef.doc(variant.id).update(variant);
+                    console.log(`✅ Updated variant: ${variant.id}`);
+                }
+            }
+            
+            console.log('✅ Product and variants updated successfully');
+            this.showSuccess('Product and variants updated successfully!');
             
             // Refresh products list
             await this.fetchProducts();
@@ -466,6 +670,137 @@ class AdminPanel {
         } catch (error) {
             console.error('❌ Error updating product:', error);
             this.showError('Failed to update product. Please try again.');
+        }
+    }
+
+    generateSKU(productName, color, size) {
+        // Generate SKU format: PRODUCT-COLOR-SIZE
+        const productCode = productName.substring(0, 3).toUpperCase();
+        const colorCode = color.substring(0, 3).toUpperCase();
+        const sizeCode = size.toUpperCase();
+        
+        return `${productCode}-${colorCode}-${sizeCode}`;
+    }
+
+    setFormLoading(form, isLoading) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const cancelBtn = form.querySelector('#cancelEdit');
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        if (isLoading) {
+            // Store original button text
+            if (!submitBtn.dataset.originalText) {
+                submitBtn.dataset.originalText = submitBtn.textContent;
+            }
+            
+            // Disable form interactions
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            inputs.forEach(input => input.disabled = true);
+            
+            // Add spinner to the left of text
+            submitBtn.innerHTML = `<span class="loading-spinner"></span> ${submitBtn.dataset.originalText}`;
+            submitBtn.classList.add('loading');
+            
+        } else {
+            // Re-enable form interactions
+            submitBtn.disabled = false;
+            cancelBtn.disabled = false;
+            inputs.forEach(input => input.disabled = false);
+            
+            // Restore original button text
+            submitBtn.textContent = submitBtn.dataset.originalText || 'Save Changes';
+            submitBtn.classList.remove('loading');
+            delete submitBtn.dataset.originalText;
+        }
+    }
+
+    openNewProductForm() {
+        // Create a new empty product
+        const newProduct = {
+            id: null,
+            name: '',
+            slug: '',
+            category: '',
+            description: '',
+            status: 'draft',
+            tags: [],
+            images: [],
+            variants: []
+        };
+
+        this.openProductEditForm(newProduct, true);
+    }
+
+    async createNewProduct(form) {
+        const db = window.firebaseServices.db;
+        
+        try {
+            // Collect product base data
+            const productData = {
+                name: form.querySelector('#productName').value,
+                slug: form.querySelector('#productSlug').value,
+                category: form.querySelector('#productCategory').value,
+                description: form.querySelector('#productDescription').value,
+                status: form.querySelector('#productStatus').value,
+                tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                images: form.querySelector('#productImages').value.split('\n').map(url => url.trim()).filter(url => url),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            // Create product in Firestore
+            const productRef = await db.collection('products').add(productData);
+            const productId = productRef.id;
+            
+            console.log(`✅ Created new product: ${productId}`);
+
+            // Collect and save variants
+            const variantCards = form.querySelectorAll('.variant-card');
+            const variants = [];
+            
+            for (const card of variantCards) {
+                const size = card.querySelector('[name="variant-size"]').value;
+                const color = card.querySelector('[name="variant-color"]').value;
+                const price = parseInt(card.querySelector('[name="variant-price"]').value);
+                const currency = card.querySelector('[name="variant-currency"]').value;
+                const quantity = parseInt(card.querySelector('[name="variant-quantity"]').value);
+                
+                if (size && color && !isNaN(price) && !isNaN(quantity)) {
+                    // Use manual SKU or generate if empty
+                    let sku = card.querySelector('[name="variant-sku"]').value.trim();
+                    if (!sku) {
+                        sku = this.generateSKU(productData.name, color, size);
+                    }
+                    
+                    const variantData = {
+                        size,
+                        color,
+                        sku,
+                        price,
+                        currency,
+                        quantity,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+
+                    const variantRef = await db.collection('products')
+                        .doc(productId)
+                        .collection('variants')
+                        .add(variantData);
+                    
+                    console.log(`✅ Created variant: ${variantRef.id}`);
+                }
+            }
+            
+            this.showSuccess('Product created successfully!');
+            
+            // Refresh products list
+            await this.fetchProducts();
+            
+        } catch (error) {
+            console.error('❌ Error creating product:', error);
+            this.showError('Failed to create product. Please try again.');
         }
     }
 
