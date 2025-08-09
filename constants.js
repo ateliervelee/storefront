@@ -28,7 +28,10 @@ const PRODUCT_CONSTANTS = {
         { value: 'pink', label: 'Pink' },
         { value: 'beige', label: 'Beige' },
         { value: 'brown', label: 'Brown' },
-        { value: 'gray', label: 'Gray' }
+        { value: 'gray', label: 'Gray' },
+        { value: 'gold', label: 'Gold' },
+        { value: 'yellow', label: 'Yellow' },
+        { value: 'silver', label: 'Silver' }
     ],
     
     currencies: [
