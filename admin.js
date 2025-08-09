@@ -78,6 +78,10 @@ class AdminPanel {
         const signOutHandler = async () => {
             try {
                 await this.auth.signOut();
+                
+                // Clean up admin data when user signs out
+                this.cleanupAdminData();
+                
             } catch (error) {
                 console.error('Logout error:', error);
                 this.showError('Failed to sign out. Please try again.');
@@ -826,6 +830,53 @@ class AdminPanel {
         setTimeout(() => {
             document.body.removeChild(notification);
         }, 3000);
+    }
+
+    cleanupAdminData() {
+        console.log('🧹 Cleaning up admin data...');
+        
+        // Hide admin sections
+        const productsSection = document.getElementById('productsSection');
+        const imageGallery = document.getElementById('imageGallery');
+        const userHeader = document.getElementById('userHeader');
+        const accessDenied = document.getElementById('accessDenied');
+        
+        if (productsSection) {
+            productsSection.style.display = 'none';
+        }
+        
+        if (imageGallery) {
+            imageGallery.style.display = 'none';
+        }
+        
+        if (userHeader) {
+            userHeader.style.display = 'none';
+        }
+        
+        if (accessDenied) {
+            accessDenied.classList.remove('show');
+        }
+        
+        // Clear products data
+        const productsContainer = document.getElementById('productsContainer');
+        if (productsContainer) {
+            productsContainer.innerHTML = '';
+        }
+        
+        // Clear gallery data
+        const galleryContainer = document.getElementById('galleryContainer');
+        if (galleryContainer) {
+            galleryContainer.innerHTML = '';
+        }
+        
+        // Clear role badge
+        const roleBadge = document.getElementById('roleBadge');
+        if (roleBadge) {
+            roleBadge.textContent = '';
+            roleBadge.style.display = 'none';
+        }
+        
+        console.log('✅ Admin data cleaned up');
     }
 
     showAccessDenied(email) {
