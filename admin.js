@@ -726,6 +726,12 @@ class AdminPanel {
         
         return selectedImages.map(imageName => `
             <div class="selected-image-item" data-image="${imageName}">
+                <button type="button" class="preview-btn" onclick="previewImage('${imageName}')" title="Preview image">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
                 <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
                 <div class="image-overlay">
                     <span class="image-name">${imageName}</span>
@@ -778,6 +784,12 @@ class AdminPanel {
             const isSelected = selectedImages.includes(imageName);
             return `
                 <div class="available-image-item ${isSelected ? 'selected' : ''}" data-image="${imageName}">
+                    <button type="button" class="preview-btn" onclick="previewImage('${imageName}')" title="Preview image">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
                     <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
                     <div class="image-overlay">
                         <span class="image-name">${imageName}</span>
@@ -812,14 +824,18 @@ class AdminPanel {
              });
          }
          
-         // Make methods globally accessible for onclick handlers
-         window.toggleImageSelection = (imageName) => {
-             this.toggleImageSelection(imageName);
-         };
-         
-         window.removeSelectedImage = (imageName) => {
-             this.removeSelectedImage(imageName);
-         };
+                 // Make methods globally accessible for onclick handlers
+        window.toggleImageSelection = (imageName) => {
+            this.toggleImageSelection(imageName);
+        };
+        
+        window.removeSelectedImage = (imageName) => {
+            this.removeSelectedImage(imageName);
+        };
+        
+        window.previewImage = (imageName) => {
+            this.previewImage(imageName);
+        };
      }
 
      toggleImageSelection(imageName) {
@@ -850,16 +866,22 @@ class AdminPanel {
              noImagesMsg.remove();
          }
          
-         // Add new selected image
-         const imageHtml = `
-             <div class="selected-image-item" data-image="${imageName}">
-                 <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
-                 <div class="image-overlay">
-                     <span class="image-name">${imageName}</span>
-                     <button type="button" class="remove-image-btn" onclick="removeSelectedImage('${imageName}')">×</button>
-                 </div>
-             </div>
-         `;
+                 // Add new selected image
+        const imageHtml = `
+            <div class="selected-image-item" data-image="${imageName}">
+                <button type="button" class="preview-btn" onclick="previewImage('${imageName}')" title="Preview image">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+                <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
+                <div class="image-overlay">
+                    <span class="image-name">${imageName}</span>
+                    <button type="button" class="remove-image-btn" onclick="removeSelectedImage('${imageName}')">×</button>
+                </div>
+            </div>
+        `;
          
          selectedContainer.insertAdjacentHTML('beforeend', imageHtml);
      }
@@ -1140,6 +1162,31 @@ class AdminPanel {
             default:
                 return 'An error occurred during sign-in. Please try again.';
         }
+    }
+
+    previewImage(imageName) {
+        // Create modal overlay for image preview
+        const modal = document.createElement('div');
+        modal.className = 'image-preview-modal';
+        modal.innerHTML = `
+            <div class="preview-overlay" onclick="this.closest('.image-preview-modal').remove()"></div>
+            <div class="preview-content">
+                <div class="preview-header">
+                    <h3>${imageName}</h3>
+                    <button class="preview-close" onclick="this.closest('.image-preview-modal').remove()">×</button>
+                </div>
+                <div class="preview-image-container">
+                    <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" class="preview-image">
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            modal.classList.add('show');
+        });
     }
 }
 
