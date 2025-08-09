@@ -203,6 +203,14 @@ class AdminPanel {
                 this.openNewProductForm();
             });
         }
+
+        const viewStoreBtn = document.getElementById('viewStoreBtn');
+        if (viewStoreBtn) {
+            viewStoreBtn.addEventListener('click', () => {
+                // Open the main store page in a new tab
+                window.open('/', '_blank');
+            });
+        }
     }
 
     async fetchProducts() {
