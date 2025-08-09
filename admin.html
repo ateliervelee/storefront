@@ -478,6 +478,24 @@
             text-align: left;
         }
 
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .gallery-btn.secondary {
+            background: var(--warm-white);
+            color: var(--charcoal);
+            border: 1px solid var(--soft-beige);
+        }
+
+        .gallery-btn.secondary:hover {
+            background: var(--soft-beige);
+            color: var(--charcoal);
+            border-color: var(--warm-sand);
+        }
+
         .products-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(254px, 1fr));
@@ -1450,11 +1468,14 @@
         <!-- Products Section (Only visible when authenticated) -->
         <div class="products-section" id="productsSection" style="display: none;">
                      <div class="products-header">
-             <div>
-                 <h2>Product Management</h2>
-                 <p>Manage your product catalog</p>
-             </div>
-             <button class="gallery-btn" id="addProductBtn">Add New Product</button>
+                         <div>
+                <h2>Product Management</h2>
+                <p>Manage your product catalog</p>
+            </div>
+            <div class="header-buttons">
+                <button class="gallery-btn secondary" id="viewStoreBtn">View Store</button>
+                <button class="gallery-btn" id="addProductBtn">Add New Product</button>
+            </div>
          </div>
             
             <div class="products-container" id="productsContainer">
