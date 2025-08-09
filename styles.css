@@ -404,7 +404,7 @@ p {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6rem;
-    margin-left: 8rem;
+    margin-left: 12rem;
 }
 
 .text-content h3 {
@@ -734,7 +734,7 @@ p {
     }
     
     .fashion-week-content {
-        margin-left: 6rem;
+        margin-left: 10rem;
         gap: 4rem;
     }
     
