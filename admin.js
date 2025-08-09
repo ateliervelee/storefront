@@ -364,7 +364,7 @@ class AdminPanel {
     }
 
     renderVariantForm(variant = {}, index = 0) {
-        const variantId = variant.id || `new-${Date.now()}-${index}`;
+        const variantId = variant.id || Date.now().toString();
         
         return `
             <div class="variant-card" data-variant-id="${variantId}">
@@ -422,7 +422,7 @@ class AdminPanel {
         `;
     }
 
-    addVariantToForm() {
+    async addVariantToForm() {
         const container = document.getElementById('variantsContainer');
         const noVariantsMsg = container.querySelector('.no-variants');
         
@@ -432,6 +432,11 @@ class AdminPanel {
         
         const existingVariants = container.querySelectorAll('.variant-card');
         const newIndex = existingVariants.length;
+        
+        // Add small delay to ensure unique timestamps if multiple variants added quickly
+        if (newIndex > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1));
+        }
         
         const variantHtml = this.renderVariantForm({}, newIndex);
         container.insertAdjacentHTML('beforeend', variantHtml);
@@ -561,8 +566,8 @@ class AdminPanel {
         overlay.addEventListener('click', closeModal);
 
         // Add variant functionality
-        addVariantBtn.addEventListener('click', () => {
-            this.addVariantToForm();
+        addVariantBtn.addEventListener('click', async () => {
+            await this.addVariantToForm();
         });
 
         // Setup image gallery
@@ -651,10 +656,10 @@ class AdminPanel {
                 .get();
             
             const existingVariantIds = existingVariantsSnapshot.docs.map(doc => doc.id);
-            const newVariantIds = variants.map(v => v.id).filter(id => !id.startsWith('new-'));
+            const currentVariantIds = variants.map(v => v.id);
             
             // Delete removed variants
-            const variantsToDelete = existingVariantIds.filter(id => !newVariantIds.includes(id));
+            const variantsToDelete = existingVariantIds.filter(id => !currentVariantIds.includes(id));
             for (const variantId of variantsToDelete) {
                 await db.collection('products')
                     .doc(productId)
@@ -669,13 +674,13 @@ class AdminPanel {
                     .doc(productId)
                     .collection('variants');
                 
-                if (variant.id.startsWith('new-')) {
-                    // Create new variant
-                    const docRef = await variantRef.add({
+                if (!existingVariantIds.includes(variant.id)) {
+                    // Create new variant with the ID from the form (already Unix timestamp)
+                    await variantRef.doc(variant.id).set({
                         ...variant,
                         createdAt: new Date()
                     });
-                    console.log(`✅ Created new variant: ${docRef.id}`);
+                    console.log(`✅ Created new variant: ${variant.id}`);
                 } else {
                     // Update existing variant
                     await variantRef.doc(variant.id).update(variant);
@@ -975,9 +980,11 @@ class AdminPanel {
                 updatedAt: new Date()
             };
 
-            // Create product in Firestore
-            const productRef = await db.collection('products').add(productData);
-            const productId = productRef.id;
+            // Generate Unix timestamp ID for product
+            const productId = Date.now().toString();
+            
+            // Create product in Firestore with custom ID
+            await db.collection('products').doc(productId).set(productData);
             
             console.log(`✅ Created new product: ${productId}`);
 
@@ -1010,12 +1017,18 @@ class AdminPanel {
                         updatedAt: new Date()
                     };
 
-                    const variantRef = await db.collection('products')
+                    // Generate Unix timestamp ID for variant
+                    const variantId = Date.now().toString();
+                    // Add small delay to ensure unique timestamps
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                    
+                    await db.collection('products')
                         .doc(productId)
                         .collection('variants')
-                        .add(variantData);
+                        .doc(variantId)
+                        .set(variantData);
                     
-                    console.log(`✅ Created variant: ${variantRef.id}`);
+                    console.log(`✅ Created variant: ${variantId}`);
                 }
             }
             

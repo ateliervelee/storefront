@@ -40,8 +40,8 @@ const PRODUCT_CONSTANTS = {
     ],
     
     currencies: [
-        { value: 'USD', label: 'USD ($)' },
         { value: 'EUR', label: 'EUR (€)' },
+        { value: 'USD', label: 'USD ($)' },
         { value: 'GBP', label: 'GBP (£)' }
     ],
     
