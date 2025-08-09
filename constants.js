@@ -1,5 +1,10 @@
 // Product Management Constants
 const PRODUCT_CONSTANTS = {
+    // Base URL for product images
+    imageBaseUrl: 'https://raw.githubusercontent.com/ateliervelee/storefront/refs/heads/main/assets/images/',
+    
+    // Image index JSON URL
+    imageIndexUrl: 'https://raw.githubusercontent.com/ateliervelee/storefront/refs/heads/main/assets/images/index.json',
     categories: [
         { value: 'dress', label: 'Dresses' },
         { value: 'top', label: 'Tops' },

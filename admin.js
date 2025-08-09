@@ -271,10 +271,9 @@ class AdminPanel {
         card.className = 'product-card';
         card.dataset.productId = product.id;
 
-        // Get first image or use placeholder
-        const imageUrl = product.images && product.images.length > 0 
-            ? product.images[0] 
-            : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU0IiBoZWlnaHQ9IjI1NCIgdmlld0JveD0iMCAwIDI1NCAyNTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyNTQiIGhlaWdodD0iMjU0IiBmaWxsPSIjRThFM0Q4Ii8+CjxwYXRoIGQ9Ik0xMjcgMTI3QzEzMS40MTggMTI3IDEzNSAxMjMuNDE4IDEzNSAxMTlDMTM1IDExNC41ODE3IDQ0LjQxODMgMjQgMTI3IDExMUMxMjIuNTgyIDExMSAxMTkgMTE0LjU4MiAxMTkgMTE5QzExOSAxMjMuNDE4IDEyMi41ODIgMTI3IDEyNyAxMjdaIiBmaWxsPSIjOEI3RDZCIi8+CjxwYXRoIGQ9Ik0xMjcgMTM1QzExNi41IDEzNSAxMDcgMTQ0LjUgMTA3IDE1NEgxMDdDMTEwIDE1NCAxMTAgMTU1IDExMCAxNTZDMTA3IDE2MC40MTggMTEwLjU4MiAxNjQgMTE1IDE2NEgxMzlDMTQzLjQxOCAxNjQgMTQ3IDE2MC40MTggMTQ3IDE1NkMxNDcgMTU1IDE0NyAxNTQgMTQ3IDE1NEgxNDdDMTQ3IDE0NC41IDEzNy41IDEzNSAxMjcgMTM1WiIgZmlsbD0iIzhCN0Q2QiIvPgo8L3N2Zz4K';
+        // Get first image and build full URL
+        const firstImageName = product.images && product.images.length > 0 ? product.images[0] : null;
+        const imageUrl = this.buildImageUrl(firstImageName);
 
         // Calculate aggregate data from variants
         const totalStock = product.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0);
@@ -503,8 +502,24 @@ class AdminPanel {
                             </div>
                             
                             <div class="form-group">
-                                <label for="productImages">Image URLs (one per line)</label>
-                                <textarea id="productImages" rows="3">${product.images ? product.images.join('\n') : ''}</textarea>
+                                <label>Product Images</label>
+                                <div class="image-gallery-section">
+                                    <div class="gallery-search">
+                                        <input type="text" id="imageSearch" placeholder="Search images by filename..." class="search-input">
+                                    </div>
+                                    <div class="selected-images">
+                                        <h4>Product Images</h4>
+                                        <div id="selectedImagesContainer" class="selected-images-grid">
+                                            ${this.renderSelectedImages(product.images || [])}
+                                        </div>
+                                    </div>
+                                    <div class="available-images">
+                                        <h4>Image Gallery</h4>
+                                        <div id="availableImagesContainer" class="available-images-grid">
+                                            <div class="loading-images">Loading images...</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -550,6 +565,9 @@ class AdminPanel {
             this.addVariantToForm();
         });
 
+        // Setup image gallery
+        this.setupImageGallery();
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -588,7 +606,7 @@ class AdminPanel {
                 description: form.querySelector('#productDescription').value,
                 status: form.querySelector('#productStatus').value,
                 tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
-                images: form.querySelector('#productImages').value.split('\n').map(url => url.trim()).filter(url => url),
+                images: this.getSelectedImageNames(),
                 updatedAt: new Date()
             };
 
@@ -686,6 +704,188 @@ class AdminPanel {
         return `${productCode}-${colorCode}-${sizeCode}`;
     }
 
+    buildImageUrl(imageName) {
+        // If imageName is already a full URL, return as-is
+        if (imageName && (imageName.startsWith('http://') || imageName.startsWith('https://'))) {
+            return imageName;
+        }
+        
+        // If imageName is empty or undefined, return placeholder
+        if (!imageName) {
+            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU0IiBoZWlnaHQ9IjI1NCIgdmlld0JveD0iMCAwIDI1NCAyNTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyNTQiIGhlaWdodD0iMjU0IiBmaWxsPSIjRThFM0Q4Ii8+CjxwYXRoIGQ9Ik0xMjcgMTI3QzEzMS40MTggMTI3IDEzNSAxMjMuNDE4IDEzNSAxMTlDMTM1IDExNC41ODE3IDQ0LjQxODMgMjQgMTI3IDExMUMxMjIuNTgyIDExMSAxMTkgMTE0LjU4MiAxMTkgMTE5QzExOSAxMjMuNDE4IDEyMi41ODIgMTI3IDEyNyAxMjdaIiBmaWxsPSIjOEI3RDZCIi8+CjxwYXRoIGQ9Ik0xMjcgMTM1QzExNi41IDEzNSAxMDcgMTQ0LjUgMTA3IDE1NEgxMDdDMTEwIDE1NCAxMTAgMTU1IDExMCAxNTZDMTA3IDE2MC40MTggMTEwLjU4MiAxNjQgMTE1IDE2NEgxMzlDMTQzLjQxOCAxNjQgMTQ3IDE2MC40MTggMTQ3IDE1NkMxNDcgMTU1IDE0NyAxNTQgMTQ3IDE1NEgxNDdDMTQ3IDE0NC41IDEzNy41IDEzNSAxMjcgMTM1WiIgZmlsbD0iIzhCN0Q2QiIvPgo8L3N2Zz4K';
+        }
+        
+        // Build full URL from base + filename
+        return PRODUCT_CONSTANTS.imageBaseUrl + imageName;
+    }
+
+    renderSelectedImages(selectedImages) {
+        if (!selectedImages || selectedImages.length === 0) {
+            return '<div class="no-images">No images selected</div>';
+        }
+        
+        return selectedImages.map(imageName => `
+            <div class="selected-image-item" data-image="${imageName}">
+                <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
+                <div class="image-overlay">
+                    <span class="image-name">${imageName}</span>
+                    <button type="button" class="remove-image-btn" onclick="removeSelectedImage('${imageName}')">×</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async loadAvailableImages() {
+        try {
+            console.log('🖼️ Loading available images...');
+            
+            const response = await fetch(PRODUCT_CONSTANTS.imageIndexUrl);
+            if (!response.ok) {
+                throw new Error(`Failed to load images: ${response.status}`);
+            }
+            
+            const imageList = await response.json();
+            console.log(`✅ Loaded ${imageList.length} available images`);
+            
+            this.availableImages = imageList;
+            this.displayAvailableImages(imageList);
+            
+        } catch (error) {
+            console.error('❌ Error loading images:', error);
+            const container = document.getElementById('availableImagesContainer');
+            if (container) {
+                container.innerHTML = '<div class="error-loading">Failed to load images. Please try again.</div>';
+            }
+        }
+    }
+
+    displayAvailableImages(imageList, filter = '') {
+        const container = document.getElementById('availableImagesContainer');
+        if (!container) return;
+        
+        const filteredImages = imageList.filter(imageName => 
+            imageName.toLowerCase().includes(filter.toLowerCase())
+        );
+        
+        if (filteredImages.length === 0) {
+            container.innerHTML = '<div class="no-images">No images found</div>';
+            return;
+        }
+        
+        const selectedImages = this.getSelectedImageNames();
+        
+        container.innerHTML = filteredImages.map(imageName => {
+            const isSelected = selectedImages.includes(imageName);
+            return `
+                <div class="available-image-item ${isSelected ? 'selected' : ''}" data-image="${imageName}">
+                    <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="image-name">${imageName}</span>
+                        <button type="button" class="select-image-btn ${isSelected ? 'selected' : ''}" onclick="toggleImageSelection('${imageName}')">
+                            ${isSelected ? '✓ Selected' : '+ Select'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    getSelectedImageNames() {
+        const selectedContainer = document.getElementById('selectedImagesContainer');
+        if (!selectedContainer) return [];
+        
+                 return Array.from(selectedContainer.querySelectorAll('.selected-image-item'))
+             .map(item => item.dataset.image);
+     }
+
+     setupImageGallery() {
+         // Load available images
+         this.loadAvailableImages();
+         
+         // Setup search functionality
+         const searchInput = document.getElementById('imageSearch');
+         if (searchInput) {
+             searchInput.addEventListener('input', (e) => {
+                 if (this.availableImages) {
+                     this.displayAvailableImages(this.availableImages, e.target.value);
+                 }
+             });
+         }
+         
+         // Make methods globally accessible for onclick handlers
+         window.toggleImageSelection = (imageName) => {
+             this.toggleImageSelection(imageName);
+         };
+         
+         window.removeSelectedImage = (imageName) => {
+             this.removeSelectedImage(imageName);
+         };
+     }
+
+     toggleImageSelection(imageName) {
+         const selectedImages = this.getSelectedImageNames();
+         const isSelected = selectedImages.includes(imageName);
+         
+         if (isSelected) {
+             this.removeSelectedImage(imageName);
+         } else {
+             this.addSelectedImage(imageName);
+         }
+         
+         // Refresh available images to update button states
+         if (this.availableImages) {
+             const searchInput = document.getElementById('imageSearch');
+             const filter = searchInput ? searchInput.value : '';
+             this.displayAvailableImages(this.availableImages, filter);
+         }
+     }
+
+     addSelectedImage(imageName) {
+         const selectedContainer = document.getElementById('selectedImagesContainer');
+         if (!selectedContainer) return;
+         
+         // Remove "no images" message if present
+         const noImagesMsg = selectedContainer.querySelector('.no-images');
+         if (noImagesMsg) {
+             noImagesMsg.remove();
+         }
+         
+         // Add new selected image
+         const imageHtml = `
+             <div class="selected-image-item" data-image="${imageName}">
+                 <img src="${this.buildImageUrl(imageName)}" alt="${imageName}" loading="lazy">
+                 <div class="image-overlay">
+                     <span class="image-name">${imageName}</span>
+                     <button type="button" class="remove-image-btn" onclick="removeSelectedImage('${imageName}')">×</button>
+                 </div>
+             </div>
+         `;
+         
+         selectedContainer.insertAdjacentHTML('beforeend', imageHtml);
+     }
+
+     removeSelectedImage(imageName) {
+         const selectedContainer = document.getElementById('selectedImagesContainer');
+         if (!selectedContainer) return;
+         
+         const imageItem = selectedContainer.querySelector(`[data-image="${imageName}"]`);
+         if (imageItem) {
+             imageItem.remove();
+         }
+         
+         // Show "no images" message if container is empty
+         if (selectedContainer.children.length === 0) {
+             selectedContainer.innerHTML = '<div class="no-images">No images selected</div>';
+         }
+         
+         // Refresh available images to update button states
+         if (this.availableImages) {
+             const searchInput = document.getElementById('imageSearch');
+             const filter = searchInput ? searchInput.value : '';
+             this.displayAvailableImages(this.availableImages, filter);
+         }
+     }
+
     setFormLoading(form, isLoading) {
         const submitBtn = form.querySelector('button[type="submit"]');
         const cancelBtn = form.querySelector('#cancelEdit');
@@ -748,7 +948,7 @@ class AdminPanel {
                 description: form.querySelector('#productDescription').value,
                 status: form.querySelector('#productStatus').value,
                 tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
-                images: form.querySelector('#productImages').value.split('\n').map(url => url.trim()).filter(url => url),
+                images: this.getSelectedImageNames(),
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
