@@ -48,10 +48,16 @@ class ScriptLoader {
                 async: false,
                 defer: false
             });
+            this.scripts.push({
+                src: 'products.js',
+                async: false,
+                defer: false
+            });
         }
         
         this.loadedScripts = 0;
         this.totalScripts = this.scripts.length;
+        console.log(`📊 Total scripts to load: ${this.totalScripts}`);
     }
 
     loadScript(scriptConfig) {

@@ -308,3 +308,4 @@ interactiveElements.forEach(element => {
         document.body.style.cursor = 'default';
     });
 });
+
