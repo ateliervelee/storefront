@@ -1,0 +1,264 @@
+// Products Management
+
+class ProductsManager {
+    constructor() {
+        this.products = [];
+        this.productsGrid = document.getElementById('productsGrid');
+        this.loadProducts();
+    }
+
+    async loadProducts() {
+        try {
+            console.log('🔄 Loading products from Firestore...');
+            console.log('🔍 Checking Firebase services:', window.firebaseServices);
+            console.log('🔍 Firebase db:', window.firebaseServices?.db);
+            
+            if (!window.firebaseServices?.db) {
+                console.log('⚠️ Firebase not available, loading demo products');
+                this.loadDemoProducts();
+                return;
+            }
+
+            const db = window.firebaseServices.db;
+            const productsSnapshot = await db.collection('products').where('status', '==', 'active').get();
+            const products = [];
+
+            // Fetch each product with its variants
+            for (const productDoc of productsSnapshot.docs) {
+                const productData = {
+                    id: productDoc.id,
+                    ...productDoc.data()
+                };
+
+                // Fetch variants for this product
+                const variantsSnapshot = await db.collection('products')
+                    .doc(productDoc.id)
+                    .collection('variants')
+                    .get();
+
+                productData.variants = variantsSnapshot.docs.map(variantDoc => ({
+                    id: variantDoc.id,
+                    ...variantDoc.data()
+                }));
+
+                // Only include products that have variants
+                if (productData.variants.length > 0) {
+                    products.push(productData);
+                }
+            }
+
+            this.products = products;
+            console.log(`✅ Loaded ${products.length} products`);
+            this.renderProducts();
+            
+        } catch (error) {
+            console.error('❌ Error loading products:', error);
+            this.loadDemoProducts();
+        }
+    }
+
+    loadDemoProducts() {
+        // Demo products for when Firebase is not available
+        // Prices are in eurocents (same as admin panel)
+        this.products = [
+            {
+                id: 'demo1',
+                name: 'Elegant Evening Dress',
+                images: ['https://images.unsplash.com/photo-1566479179817-c0e72b5cef77?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
+                variants: [
+                    { id: 'v1', size: 'S', color: 'black', price: 29900, currency: 'EUR', quantity: 5 },
+                    { id: 'v2', size: 'M', color: 'black', price: 29900, currency: 'EUR', quantity: 3 },
+                    { id: 'v3', size: 'L', color: 'black', price: 29900, currency: 'EUR', quantity: 2 }
+                ]
+            },
+            {
+                id: 'demo2',
+                name: 'Luxury Silk Blouse',
+                images: ['https://images.unsplash.com/photo-1581803118522-7b72a50f7e9f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
+                variants: [
+                    { id: 'v4', size: 'XS', color: 'white', price: 18900, currency: 'EUR', quantity: 4 },
+                    { id: 'v5', size: 'S', color: 'white', price: 18900, currency: 'EUR', quantity: 6 },
+                    { id: 'v6', size: 'M', color: 'beige', price: 18900, currency: 'EUR', quantity: 2 }
+                ]
+            }
+        ];
+        console.log('📦 Loaded demo products');
+        this.renderProducts();
+    }
+
+    renderProducts() {
+        // Clear skeleton loading
+        this.productsGrid.innerHTML = '';
+
+        if (this.products.length === 0) {
+            this.productsGrid.innerHTML = '<div class="no-products">No products available</div>';
+            return;
+        }
+
+        this.products.forEach(product => {
+            const productCard = this.createProductCard(product);
+            this.productsGrid.appendChild(productCard);
+        });
+    }
+
+    createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        
+        // Get the smallest size variant for default selection
+        const sortedVariants = this.sortVariantsBySize(product.variants);
+        const defaultVariant = sortedVariants[0];
+        
+        // Get available sizes and colors
+        const availableSizes = [...new Set(product.variants.map(v => v.size))].sort((a, b) => {
+            const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+            return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
+        });
+        
+        const currentVariant = product.variants.find(v => v.size === availableSizes[0]);
+        const imageUrl = this.buildImageUrl(product.images?.[0]);
+
+        card.innerHTML = `
+            <div class="product-image-container">
+                <img src="${imageUrl}" alt="${product.name}" class="product-image">
+            </div>
+            <div class="product-info">
+                                   <div class="product-header">
+                       <h3 class="product-name">${product.name}</h3>
+                       <div class="product-price">${this.formatPrice(currentVariant.price, currentVariant.currency)}</div>
+                   </div>
+                <div class="product-options">
+                    <div class="product-variants">
+                        <div class="size-selector">
+                            ${availableSizes.map(size => `
+                                <button class="size-option ${size === availableSizes[0] ? 'selected' : ''}" 
+                                        data-size="${size}" data-product-id="${product.id}">
+                                    ${size}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="color-info">
+                            <div class="color-circle" data-color="${currentVariant.color}"></div>
+                            <span class="color-label">${currentVariant.color}</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="add-to-cart" data-product-id="${product.id}" data-variant-id="${currentVariant.id}">
+                    Add to Cart
+                </button>
+            </div>
+        `;
+
+        // Add event listeners for size selection
+        const sizeOptions = card.querySelectorAll('.size-option');
+        sizeOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                this.handleSizeChange(e, product, card);
+            });
+        });
+
+        // Add event listener for add to cart (placeholder)
+        const addToCartBtn = card.querySelector('.add-to-cart');
+        addToCartBtn.addEventListener('click', () => {
+            console.log('🛒 Add to cart clicked - functionality to be implemented');
+            // TODO: Implement cart functionality
+        });
+
+        return card;
+    }
+
+    handleSizeChange(event, product, card) {
+        const selectedSize = event.target.dataset.size;
+        const sizeOptions = card.querySelectorAll('.size-option');
+        
+        // Update selected size visual
+        sizeOptions.forEach(option => {
+            option.classList.toggle('selected', option.dataset.size === selectedSize);
+        });
+
+        // Find the variant for the selected size
+        const selectedVariant = product.variants.find(v => v.size === selectedSize);
+        if (selectedVariant) {
+            // Update price
+            const priceElement = card.querySelector('.product-price');
+            priceElement.textContent = this.formatPrice(selectedVariant.price, selectedVariant.currency);
+
+            // Update color
+            const colorCircle = card.querySelector('.color-circle');
+            const colorLabel = card.querySelector('.color-label');
+            colorCircle.dataset.color = selectedVariant.color;
+            colorLabel.textContent = selectedVariant.color;
+
+            // Update add to cart button
+            const addToCartBtn = card.querySelector('.add-to-cart');
+            addToCartBtn.dataset.variantId = selectedVariant.id;
+        }
+    }
+
+    sortVariantsBySize(variants) {
+        const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        return variants.sort((a, b) => {
+            return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
+        });
+    }
+
+    buildImageUrl(imageName) {
+        if (!imageName) {
+            return 'https://images.unsplash.com/photo-1566479179817-c0e72b5cef77?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+        }
+        
+        // If it's already a full URL, return as is
+        if (imageName.startsWith('http')) {
+            return imageName;
+        }
+        
+        // Build URL from base path
+        const baseUrl = 'https://raw.githubusercontent.com/ateliervelee/storefront/refs/heads/main/assets/images/';
+        return baseUrl + imageName;
+    }
+
+    formatPrice(price, currency = 'EUR') {
+        // Convert from eurocents to euros (same logic as admin panel)
+        const euros = Math.floor(price / 100);
+        const cents = price % 100;
+        
+        // Format based on currency
+        if (currency === 'EUR') {
+            return `€${euros}.${cents.toString().padStart(2, '0')}`;
+        } else if (currency === 'USD') {
+            return `$${euros}.${cents.toString().padStart(2, '0')}`;
+        } else if (currency === 'GBP') {
+            return `£${euros}.${cents.toString().padStart(2, '0')}`;
+        } else {
+            return `${currency} ${euros}.${cents.toString().padStart(2, '0')}`;
+        }
+    }
+}
+
+// Scroll to products section
+function scrollToProducts() {
+    const productsSection = document.getElementById('products');
+    if (productsSection) {
+        productsSection.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+}
+
+// Initialize products when all scripts are loaded
+document.addEventListener('allScriptsLoaded', () => {
+    console.log('🎯 All scripts loaded, initializing products...');
+    
+    const initProducts = () => {
+        const productsGrid = document.getElementById('productsGrid');
+        if (productsGrid) {
+            new ProductsManager();
+        } else {
+            console.error('❌ productsGrid element not found!');
+        }
+    };
+
+    // Small delay to ensure everything is ready
+    setTimeout(initProducts, 100);
+}); 
