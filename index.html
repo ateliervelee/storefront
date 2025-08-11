@@ -27,6 +27,12 @@
                     <a href="#feature-collection" class="nav-link">Featured</a>
                     <a href="#contact" class="nav-link">Contact</a>
                 </div>
+                <div class="cart-icon" id="cartIcon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.7 15.3C4.3 15.7 4.6 16.5 5.1 16.5H17M17 13V16.5M9 19.5C9.8 19.5 10.5 20.2 10.5 21S9.8 22.5 9 22.5 7.5 21.8 7.5 21 8.2 19.5 9 19.5ZM20 19.5C20.8 19.5 21.5 20.2 21.5 21S20.8 22.5 20 22.5 18.5 21.8 18.5 21 19.2 19.5 20 19.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="cart-count" id="cartCount">0</div>
+                </div>
                 <button class="hamburger" id="hamburger">
                     <span></span>
                     <span></span>
@@ -42,6 +48,42 @@
         <a href="#feature-collection" class="mobile-link">Featured</a>
         <a href="#seasonal-highlight" class="mobile-link">Seasonal</a>
         <a href="#contact" class="mobile-link">Contact</a>
+    </div>
+
+    <!-- Cart Drawer -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3>Shopping Cart</h3>
+            <button class="cart-close" id="cartClose">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="cart-content">
+            <div class="cart-items" id="cartItems">
+                <!-- Cart items will be populated here -->
+            </div>
+            <div class="cart-empty" id="cartEmpty" style="display: none;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.7 15.3C4.3 15.7 4.6 16.5 5.1 16.5H17M17 13V16.5M9 19.5C9.8 19.5 10.5 20.2 10.5 21S9.8 22.5 9 22.5 7.5 21.8 7.5 21 8.2 19.5 9 19.5ZM20 19.5C20.8 19.5 21.5 20.2 21.5 21S20.8 22.5 20 22.5 18.5 21.8 18.5 21 19.2 19.5 20 19.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p>Your cart is empty</p>
+                <button class="continue-shopping" id="continueShoppingBtn">Continue Shopping</button>
+            </div>
+        </div>
+        <div class="cart-footer" id="cartFooter">
+            <div class="cart-total">
+                <div class="total-line">
+                    <span>Subtotal</span>
+                    <span class="total-price" id="cartTotalPrice">€0.00</span>
+                </div>
+            </div>
+            <div class="cart-actions">
+                <button class="checkout-btn">Proceed to Checkout</button>
+                <button class="clear-cart-btn" id="clearCartBtn">Clear Cart</button>
+            </div>
+        </div>
     </div>
 
     <!-- Hero Section -->

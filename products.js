@@ -51,6 +51,9 @@ class ProductsManager {
             console.log(`✅ Loaded ${products.length} products`);
             this.renderProducts();
             
+            // Dispatch event for cart validation
+            window.dispatchEvent(new CustomEvent('productsLoaded'));
+            
         } catch (error) {
             console.error('❌ Error loading products:', error);
             this.loadDemoProducts();
@@ -84,6 +87,9 @@ class ProductsManager {
         ];
         console.log('📦 Loaded demo products');
         this.renderProducts();
+        
+        // Dispatch event for cart validation
+        window.dispatchEvent(new CustomEvent('productsLoaded'));
     }
 
     renderProducts() {
@@ -157,11 +163,10 @@ class ProductsManager {
             });
         });
 
-        // Add event listener for add to cart (placeholder)
+        // Add event listener for add to cart
         const addToCartBtn = card.querySelector('.add-to-cart');
         addToCartBtn.addEventListener('click', () => {
-            console.log('🛒 Add to cart clicked - functionality to be implemented');
-            // TODO: Implement cart functionality
+            this.handleAddToCart(product, card);
         });
 
         return card;
@@ -232,6 +237,50 @@ class ProductsManager {
         } else {
             return `${currency} ${euros}.${cents.toString().padStart(2, '0')}`;
         }
+    }
+
+    handleAddToCart(product, card) {
+        // Get the currently selected variant
+        const selectedSizeElement = card.querySelector('.size-option.selected');
+        if (!selectedSizeElement) {
+            console.error('No size selected');
+            return;
+        }
+
+        const selectedSize = selectedSizeElement.dataset.size;
+        const selectedVariant = product.variants.find(v => v.size === selectedSize);
+        
+        if (!selectedVariant) {
+            console.error('Selected variant not found');
+            return;
+        }
+
+        // Check if variant has stock
+        if (selectedVariant.quantity <= 0) {
+            alert('Sorry, this item is out of stock.');
+            return;
+        }
+
+        // Check if cart system is available
+        if (!window.shoppingCart) {
+            console.error('Shopping cart not initialized');
+            return;
+        }
+
+        // Add to cart with complete product and variant data
+        window.shoppingCart.addToCart(product.id, selectedVariant.id, 1, product, selectedVariant);
+        
+        // Optional: Show success feedback
+        const addToCartBtn = card.querySelector('.add-to-cart');
+        const originalText = addToCartBtn.textContent;
+        
+        addToCartBtn.textContent = 'Added!';
+        addToCartBtn.style.background = '#4ade80'; // Green
+        
+        setTimeout(() => {
+            addToCartBtn.textContent = originalText;
+            addToCartBtn.style.background = '';
+        }, 1500);
     }
 }
 

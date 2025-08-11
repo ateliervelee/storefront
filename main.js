@@ -49,6 +49,11 @@ class ScriptLoader {
                 defer: false
             });
             this.scripts.push({
+                src: 'cart.js',
+                async: false,
+                defer: false
+            });
+            this.scripts.push({
                 src: 'products.js',
                 async: false,
                 defer: false
