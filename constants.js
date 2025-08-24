@@ -49,6 +49,17 @@ const PRODUCT_CONSTANTS = {
         { value: 'active', label: 'Active' },
         { value: 'draft', label: 'Draft' },
         { value: 'archived', label: 'Archived' }
+    ],
+    
+    // Countries and delivery (will be replaced with Firebase data later)
+    countries: [
+        {
+            code: 'HR',
+            name: 'Croatia',
+            deliveryFee: 0.00, // Free delivery in Croatia
+            currency: 'EUR'
+        }
+        // More countries will be added via Firebase later
     ]
 };
 

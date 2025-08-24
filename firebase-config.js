@@ -22,12 +22,21 @@ try {
     const db = firebase.firestore();
     const analytics = firebase.analytics();
 
+    // Set auth persistence to LOCAL (persists across browser sessions)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+        console.log('🔐 Firebase Auth persistence set to LOCAL');
+    }).catch((error) => {
+        console.error('❌ Failed to set auth persistence:', error);
+    });
+
     // Export Firebase services for use in other scripts
     window.firebaseServices = {
         auth,
         db,
         analytics
     };
+    
+    console.log('✅ Firebase services initialized successfully');
 } catch (error) {
     console.error('Firebase services initialization failed:', error);
 } 
