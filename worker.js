@@ -190,7 +190,27 @@ function flattenShippingInfo(shippingInfo) {
 function flattenMetadata(metadata) {
   const params = {};
   Object.keys(metadata).forEach(key => {
-    params[`metadata[${key}]`] = metadata[key];
+    let value = metadata[key];
+    
+    // If customerData is too long, store only essential info
+    if (key === 'customerData' && typeof value === 'string' && value.length > 400) {
+      try {
+        const data = JSON.parse(value);
+        // Store only essential customer info to stay under 500 char limit
+        const essentialData = {
+          email: data.billing?.email || '',
+          name: `${data.billing?.firstName || ''} ${data.billing?.lastName || ''}`.trim(),
+          city: data.billing?.city || '',
+          country: data.billing?.country || ''
+        };
+        value = JSON.stringify(essentialData);
+      } catch (e) {
+        // If parsing fails, truncate the string
+        value = value.substring(0, 400);
+      }
+    }
+    
+    params[`metadata[${key}]`] = value;
   });
   return params;
 } 
