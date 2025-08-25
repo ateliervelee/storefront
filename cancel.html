@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Cancelled - Atelier Veleé</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/" class="brand-link">Atelier Veleé</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="cancel-main">
+        <div class="cancel-container">
+            <div class="cancel-content">
+                <div class="cancel-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill="#f44336"/>
+                        <path d="M15 9l-6 6M9 9l6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                
+                <h1>Payment Cancelled</h1>
+                <p>Your payment was cancelled. No charges have been made to your account.</p>
+                
+                <div class="cancel-actions">
+                    <a href="/checkout.html" class="btn-primary">Return to Checkout</a>
+                    <a href="/" class="btn-secondary">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer-placeholder></footer-placeholder>
+
+    <script src="script.js"></script>
+    <script>
+        // Set current year in footer
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadComponent('footer.html', 'footer-placeholder');
+            const currentYear = new Date().getFullYear();
+            const yearElement = document.getElementById('currentYear');
+            if (yearElement) {
+                yearElement.textContent = currentYear;
+            }
+        });
+    </script>
+</body>
+</html> 

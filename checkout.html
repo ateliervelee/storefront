@@ -63,10 +63,10 @@
                         </div>
                     </div>
 
-                    <!-- Shipping Information -->
-                    <div class="shipping-section">
-                        <h2>Shipping Information</h2>
-                        <form class="shipping-form" id="shippingForm">
+                    <!-- Billing Information -->
+                    <div class="billing-section">
+                        <h2>Billing Address</h2>
+                        <form class="billing-form" id="billingForm">
                             <div class="form-row full-width">
                                 <div class="form-group">
                                     <label for="email">Email *</label>
@@ -133,6 +133,106 @@
                                     </div>
                                 </div>
                             </div>
+
+                        </form>
+
+                        <!-- Checkboxes -->
+                        <div class="checkout-options">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="sameAsBilling" name="sameAsBilling" checked>
+                                    <span class="checkmark"></span>
+                                    Shipping is same as billing address
+                                </label>
+                            </div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="needInvoice" name="needInvoice">
+                                    <span class="checkmark"></span>
+                                    I need Company invoice
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Company Information (hidden by default) -->
+                        <div class="company-fields" id="companySection" style="display: none;">
+                            <h3>Company Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="companyName">Company Name *</label>
+                                    <input type="text" id="companyName" name="companyName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vatId">VAT ID *</label>
+                                    <input type="text" id="vatId" name="vatId" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Information (hidden by default) -->
+                    <div class="shipping-section" id="shippingSection" style="display: none;">
+                        <h2>Shipping Address</h2>
+                        <form class="shipping-form" id="shippingForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="shippingFirstName">First Name *</label>
+                                    <input type="text" id="shippingFirstName" name="shippingFirstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shippingLastName">Last Name *</label>
+                                    <input type="text" id="shippingLastName" name="shippingLastName" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row full-width">
+                                <div class="form-group">
+                                    <label for="shippingCountry">Country *</label>
+                                    <select id="shippingCountry" name="shippingCountry" required>
+                                        <option value="">Select country...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row full-width">
+                                <div class="form-group">
+                                    <label for="shippingAddress">Address *</label>
+                                    <input type="text" id="shippingAddress" name="shippingAddress" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row full-width">
+                                <div class="form-group">
+                                    <label for="shippingAddressDetails">Address Details (optional)</label>
+                                    <input type="text" id="shippingAddressDetails" name="shippingAddressDetails" placeholder="Apartment, suite, etc.">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="shippingCity">City *</label>
+                                    <input type="text" id="shippingCity" name="shippingCity" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shippingPostcode">Postcode *</label>
+                                    <input type="text" id="shippingPostcode" name="shippingPostcode" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row full-width">
+                                <div class="form-group">
+                                    <label for="shippingPhone">Contact Phone *</label>
+                                    <div class="phone-input-container">
+                                        <input type="tel" id="shippingPhone" name="shippingPhone" required placeholder="+385" value="+385">
+                                        <div class="phone-info" title="We collect your phone number in case we need to contact you about your order">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                                <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -175,7 +275,7 @@
                             </div>
 
                             <button class="place-order-btn" id="placeOrderBtn">
-                                <span>Place Order</span>
+                                <span>Pay Securely</span>
                                 <div class="order-loading" style="display: none;">
                                     <div class="spinner"></div>
                                 </div>
@@ -185,6 +285,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Mobile-only bottom button -->
+        <button class="place-order-btn mobile-full-btn" id="mobilePayBtn">
+            <span>Pay Securely</span>
+            <div class="order-loading" style="display: none;">
+                <div class="spinner"></div>
+            </div>
+        </button>
     </main>
 
     <!-- Footer Placeholder - Content will be injected via JavaScript -->
@@ -195,6 +303,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="firebase-config.js"></script>
     <script src="constants.js"></script>
     <script src="cart.js"></script>

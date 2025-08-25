@@ -7,6 +7,9 @@ class CheckoutManager {
         this.countries = [];
         this.isOrderSummaryExpanded = false;
         
+        // Initialize Stripe
+        this.stripe = Stripe('pk_test_51RzZOKLtKPQT2y5pQzio38nyUMmM6dSjMtWyuXG77HYAsp7agvkzt8YOnh258iQ0wkwhdXcsa5pzKQqxpziWtkf600FCPW1Fev');
+        
         this.init();
     }
 
@@ -41,6 +44,9 @@ class CheckoutManager {
             
             // Setup order summary toggle
             this.setupOrderSummaryToggle();
+
+            // Setup checkout options
+            this.setupCheckoutOptions();
             
             console.log('✅ CheckoutManager: Initialization complete');
         } catch (error) {
@@ -384,21 +390,45 @@ class CheckoutManager {
     }
 
     setupFormHandlers() {
+        const billingForm = document.getElementById('billingForm');
         const shippingForm = document.getElementById('shippingForm');
         const placeOrderBtn = document.getElementById('placeOrderBtn');
+        const mobilePayBtn = document.getElementById('mobilePayBtn');
 
-        placeOrderBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await this.handlePlaceOrder();
+        // Handle both desktop and mobile buttons
+        [placeOrderBtn, mobilePayBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await this.handlePlaceOrder();
+                });
+            }
         });
 
-        // Remove built-in validation styling on page load
-        const allFields = shippingForm.querySelectorAll('input, select');
-        allFields.forEach(field => {
-            // Remove any validation classes initially
+        // Setup validation for all forms
+        [billingForm, shippingForm].forEach(form => {
+            if (form) {
+                const allFields = form.querySelectorAll('input, select');
+                allFields.forEach(field => {
+                    // Remove any validation classes initially
+                    field.classList.remove('valid', 'invalid');
+                    
+                    // Add input listeners for real-time validation after first submit attempt
+                    field.addEventListener('input', () => {
+                        if (this.hasAttemptedSubmit) {
+                            this.validateField(field);
+                            this.updateSubmitButton();
+                        }
+                    });
+                });
+            }
+        });
+
+        // Setup validation for company fields
+        const companyFields = document.querySelectorAll('#companyName, #vatId');
+        companyFields.forEach(field => {
             field.classList.remove('valid', 'invalid');
             
-            // Add input listeners for real-time validation after first submit attempt
             field.addEventListener('input', () => {
                 if (this.hasAttemptedSubmit) {
                     this.validateField(field);
@@ -428,16 +458,46 @@ class CheckoutManager {
     }
 
     validateAllFields() {
-        const form = document.getElementById('shippingForm');
-        const requiredFields = form.querySelectorAll('[required]');
         let allValid = true;
 
-        requiredFields.forEach(field => {
-            const isValid = this.validateField(field);
-            if (!isValid) {
-                allValid = false;
+        // Validate billing form
+        const billingForm = document.getElementById('billingForm');
+        if (billingForm) {
+            const billingFields = billingForm.querySelectorAll('[required]');
+            billingFields.forEach(field => {
+                const isValid = this.validateField(field);
+                if (!isValid) {
+                    allValid = false;
+                }
+            });
+        }
+
+        // Validate shipping form if visible
+        const sameAsBilling = document.getElementById('sameAsBilling').checked;
+        if (!sameAsBilling) {
+            const shippingForm = document.getElementById('shippingForm');
+            if (shippingForm) {
+                const shippingFields = shippingForm.querySelectorAll('[required]');
+                shippingFields.forEach(field => {
+                    const isValid = this.validateField(field);
+                    if (!isValid) {
+                        allValid = false;
+                    }
+                });
             }
-        });
+        }
+
+        // Validate company fields if visible
+        const needInvoice = document.getElementById('needInvoice').checked;
+        if (needInvoice) {
+            const companyFields = document.querySelectorAll('#companyName[required], #vatId[required]');
+            companyFields.forEach(field => {
+                const isValid = this.validateField(field);
+                if (!isValid) {
+                    allValid = false;
+                }
+            });
+        }
 
         return allValid;
     }
@@ -463,14 +523,23 @@ class CheckoutManager {
         }
 
         const placeOrderBtn = document.getElementById('placeOrderBtn');
-        const orderLoading = placeOrderBtn.querySelector('.order-loading');
-        const orderText = placeOrderBtn.querySelector('span');
+        const mobilePayBtn = document.getElementById('mobilePayBtn');
+        
+        // Get elements for both buttons
+        const buttons = [placeOrderBtn, mobilePayBtn].filter(btn => btn);
+        const loadingElements = buttons.map(btn => ({
+            button: btn,
+            loading: btn.querySelector('.order-loading'),
+            text: btn.querySelector('span')
+        }));
 
         try {
-            // Show loading state (using fixed visibility method)
-            orderText.style.visibility = 'hidden';
-            orderLoading.style.display = 'flex';
-            placeOrderBtn.disabled = true;
+            // Show loading state on all buttons
+            loadingElements.forEach(({ button, loading, text }) => {
+                text.style.visibility = 'hidden';
+                loading.style.display = 'flex';
+                button.disabled = true;
+            });
 
             // Collect form data
             const formData = this.collectFormData();
@@ -478,65 +547,138 @@ class CheckoutManager {
             // Collect cart data
             const cartItems = this.cartManager.getCartItems();
             
-            // Calculate totals
-            const subtotal = cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0);
-            const deliveryFee = 0; // Free delivery in Croatia
-            const total = subtotal + deliveryFee;
+            if (cartItems.length === 0) {
+                alert('Your cart is empty.');
+                return;
+            }
 
-            // Create order object
-            const order = {
-                orderId: Date.now().toString(), // Simple order ID for now
-                customerInfo: formData,
-                items: cartItems,
-                totals: {
-                    subtotal: subtotal,
-                    deliveryFee: deliveryFee,
-                    total: total
+            // Create line items for Stripe
+            const lineItems = cartItems.map(item => ({
+                price_data: {
+                    currency: 'eur',
+                    product_data: {
+                        name: item.product.name,
+                        description: `Size: ${item.variant.size}, Color: ${item.variant.color}`,
+                        images: item.product.images ? [item.product.images[0]] : []
+                    },
+                    unit_amount: item.variant.price // Price in cents
                 },
-                status: 'pending',
-                createdAt: new Date(),
-                userId: this.currentUser?.uid || null
-            };
+                quantity: item.quantity
+            }));
 
-            // TODO: Save order to Firebase (when ready)
-            // await this.saveOrder(order);
+            // Create checkout session via Cloudflare Worker
+            console.log('Creating Stripe checkout session...');
+            
+            // Use Cloudflare Worker endpoint
+            const workerUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? '/create-checkout-session' // Local development uses Node.js server
+                : 'https://atelier-velee-payments.ateliervelee.workers.dev'; // Production uses Cloudflare Worker
+            
+            const response = await fetch(workerUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    line_items: lineItems,
+                    customer_email: formData.billing.email,
+                    metadata: {
+                        orderId: Date.now().toString(),
+                        userId: this.currentUser?.uid || 'guest',
+                        customerData: JSON.stringify(formData)
+                    }
+                })
+            });
 
-            // Simulate order processing
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Server error: ${response.status}`);
+            }
 
-            // Clear cart
+            const { sessionId } = await response.json();
+            console.log('Checkout session created:', sessionId);
+            
+            // Clear cart before redirecting to payment
             this.cartManager.clearCart();
+            
+            // Redirect to Stripe Checkout
+            const { error } = await this.stripe.redirectToCheckout({
+                sessionId: sessionId
+            });
 
-            // Redirect to thank you page or show success message
-            alert('Order placed successfully! You will receive a confirmation email shortly.');
-            window.location.href = '/thank-you.html';
+            if (error) {
+                console.error('Stripe redirect error:', error);
+                throw new Error(error.message);
+            }
 
         } catch (error) {
             console.error('Order placement error:', error);
-            alert('Failed to place order. Please try again.');
+            alert('Failed to process payment. Please try again.');
         } finally {
-            // Hide loading state (using fixed visibility method)
-            orderText.style.visibility = 'visible';
-            orderLoading.style.display = 'none';
-            placeOrderBtn.disabled = false;
+            // Hide loading state on all buttons
+            loadingElements.forEach(({ button, loading, text }) => {
+                text.style.visibility = 'visible';
+                loading.style.display = 'none';
+                button.disabled = false;
+            });
         }
     }
 
     collectFormData() {
-        const form = document.getElementById('shippingForm');
-        const formData = new FormData(form);
+        const billingForm = document.getElementById('billingForm');
+        const shippingForm = document.getElementById('shippingForm');
+        const sameAsBilling = document.getElementById('sameAsBilling').checked;
+        const needInvoice = document.getElementById('needInvoice').checked;
         
-        return {
-            firstName: formData.get('firstName'),
-            lastName: formData.get('lastName'),
-            email: formData.get('email'),
-            phone: formData.get('phone'),
-            country: formData.get('country'),
-            address: formData.get('address'),
-            addressDetails: formData.get('addressDetails'),
-            city: formData.get('city'),
-            postcode: formData.get('postcode')
+        const billingData = new FormData(billingForm);
+        
+        const result = {
+            billing: {
+                firstName: billingData.get('firstName'),
+                lastName: billingData.get('lastName'),
+                email: billingData.get('email'),
+                phone: billingData.get('phone'),
+                country: billingData.get('country'),
+                address: billingData.get('address'),
+                addressDetails: billingData.get('addressDetails'),
+                city: billingData.get('city'),
+                postcode: billingData.get('postcode')
+            },
+            shipping: {},
+            company: null,
+            options: {
+                sameAsBilling: sameAsBilling,
+                needInvoice: needInvoice
+            }
         };
+
+        // Collect shipping data if different from billing
+        if (!sameAsBilling && shippingForm) {
+            const shippingData = new FormData(shippingForm);
+            result.shipping = {
+                firstName: shippingData.get('shippingFirstName'),
+                lastName: shippingData.get('shippingLastName'),
+                country: shippingData.get('shippingCountry'),
+                address: shippingData.get('shippingAddress'),
+                addressDetails: shippingData.get('shippingAddressDetails'),
+                city: shippingData.get('shippingCity'),
+                postcode: shippingData.get('shippingPostcode'),
+                phone: shippingData.get('shippingPhone')
+            };
+        } else {
+            // Use billing address for shipping
+            result.shipping = { ...result.billing };
+        }
+
+        // Collect company data if needed
+        if (needInvoice) {
+            result.company = {
+                companyName: document.getElementById('companyName')?.value || '',
+                vatId: document.getElementById('vatId')?.value || ''
+            };
+        }
+
+        return result;
     }
 
     async saveOrder(order) {
@@ -551,16 +693,16 @@ class CheckoutManager {
         }
     }
 
-    setupOrderSummaryToggle() {
+        setupOrderSummaryToggle() {
         const header = document.getElementById('orderSummaryHeader');
         const content = document.getElementById('orderSummaryContent');
         const toggle = document.getElementById('summaryToggle');
-        
+
         if (!header || !content || !toggle) return;
-        
+
         // Set initial state (collapsed on mobile)
         content.classList.add('collapsed');
-        
+
         header.addEventListener('click', () => {
             this.isOrderSummaryExpanded = !this.isOrderSummaryExpanded;
             
@@ -575,6 +717,121 @@ class CheckoutManager {
                 header.classList.remove('expanded');
                 toggle.classList.remove('expanded');
             }
+        });
+    }
+
+    setupCheckoutOptions() {
+        const sameAsBillingCheckbox = document.getElementById('sameAsBilling');
+        const needInvoiceCheckbox = document.getElementById('needInvoice');
+        const shippingSection = document.getElementById('shippingSection');
+        const companySection = document.getElementById('companySection');
+
+        if (!sameAsBillingCheckbox || !needInvoiceCheckbox || !shippingSection || !companySection) return;
+
+        // Handle "Shipping is same as billing" checkbox
+        sameAsBillingCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                shippingSection.style.display = 'none';
+                // Clear shipping form validation
+                this.clearShippingValidation();
+            } else {
+                shippingSection.style.display = 'block';
+                // Copy billing data to shipping
+                this.copyBillingToShipping();
+                // Load countries for shipping dropdown
+                this.loadCountriesForShipping();
+            }
+        });
+
+        // Handle "I need Company invoice" checkbox
+        needInvoiceCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                companySection.style.display = 'block';
+            } else {
+                companySection.style.display = 'none';
+                // Clear company form data
+                this.clearCompanyData();
+            }
+        });
+    }
+
+    copyBillingToShipping() {
+        // Copy billing data to shipping form
+        const billingForm = document.getElementById('billingForm');
+        const shippingForm = document.getElementById('shippingForm');
+        
+        if (!billingForm || !shippingForm) return;
+
+        const billingData = new FormData(billingForm);
+        
+        // Map billing fields to shipping fields
+        const fieldMapping = {
+            'firstName': 'shippingFirstName',
+            'lastName': 'shippingLastName',
+            'phone': 'shippingPhone',
+            'country': 'shippingCountry',
+            'address': 'shippingAddress',
+            'addressDetails': 'shippingAddressDetails',
+            'city': 'shippingCity',
+            'postcode': 'shippingPostcode'
+        };
+
+        for (const [billingField, shippingField] of Object.entries(fieldMapping)) {
+            const billingValue = billingData.get(billingField);
+            const shippingInput = document.getElementById(shippingField);
+            if (shippingInput && billingValue) {
+                shippingInput.value = billingValue;
+            }
+        }
+    }
+
+    loadCountriesForShipping() {
+        const shippingCountrySelect = document.getElementById('shippingCountry');
+        if (!shippingCountrySelect) return;
+
+        // Use the same countries as billing
+        const countries = [...(window.PRODUCT_CONSTANTS?.countries || [])];
+        
+        if (countries.length === 0) {
+            countries.push({
+                code: 'HR',
+                name: 'Croatia',
+                deliveryFee: 0.00,
+                currency: 'EUR'
+            });
+        }
+
+        // Clear existing options
+        shippingCountrySelect.innerHTML = '<option value="">Select country...</option>';
+        
+        countries.forEach(country => {
+            const option = document.createElement('option');
+            option.value = country.code;
+            option.textContent = country.name;
+            shippingCountrySelect.appendChild(option);
+        });
+
+        // Set Croatia as default
+        shippingCountrySelect.value = 'HR';
+    }
+
+    clearShippingValidation() {
+        const shippingInputs = document.querySelectorAll('#shippingForm input, #shippingForm select');
+        shippingInputs.forEach(input => {
+            input.classList.remove('valid', 'invalid');
+        });
+    }
+
+    clearCompanyData() {
+        const companyName = document.getElementById('companyName');
+        const vatId = document.getElementById('vatId');
+        
+        if (companyName) companyName.value = '';
+        if (vatId) vatId.value = '';
+        
+        // Clear validation classes
+        [companyName, vatId].forEach(input => {
+            if (input) input.classList.remove('valid', 'invalid');
         });
     }
 }
