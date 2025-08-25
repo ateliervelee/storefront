@@ -507,6 +507,8 @@ class CheckoutManager {
     }
 
     async handlePlaceOrder() {
+        console.log('🛒 Place Order clicked!');
+        
         // Mark that submit has been attempted
         this.hasAttemptedSubmit = true;
         
@@ -514,9 +516,12 @@ class CheckoutManager {
         const isFormValid = this.validateAllFields();
         
         if (!isFormValid) {
+            console.log('❌ Form validation failed');
             alert('Please fill in all required fields.');
             return;
         }
+        
+        console.log('✅ Form validation passed');
 
         const placeOrderBtn = document.getElementById('placeOrderBtn');
         const mobilePayBtn = document.getElementById('mobilePayBtn');
@@ -563,9 +568,14 @@ class CheckoutManager {
             }));
 
             // Create checkout session via Cloudflare Worker
-            const workerUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? '/create-checkout-session' // Local development uses Node.js server
-                : 'https://atelier-velee-payments.ateliervelee.workers.dev'; // Production uses Cloudflare Worker
+            const workerUrl = 'https://atelier-velee-payments.ateliervelee.workers.dev'; // Always use Cloudflare Worker
+            
+            console.log('🔍 Checkout Debug:');
+            console.log('- Current hostname:', window.location.hostname);
+            console.log('- Is localhost?', window.location.hostname === 'localhost');
+            console.log('- Worker URL:', workerUrl);
+            console.log('- Cart items:', cartItems.length);
+            console.log('- Line items:', lineItems);
             
             // Prepare customer data for Stripe prefill
             const customerInfo = {
@@ -592,6 +602,8 @@ class CheckoutManager {
                     country: 'HR'
                 };
             
+            console.log('🚀 Making fetch request to:', workerUrl);
+            
             const response = await fetch(workerUrl, {
                 method: 'POST',
                 headers: {
@@ -608,6 +620,9 @@ class CheckoutManager {
                     }
                 })
             });
+            
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response OK:', response.ok);
 
             if (!response.ok) {
                 const errorData = await response.json();
