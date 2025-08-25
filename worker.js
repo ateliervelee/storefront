@@ -3,8 +3,15 @@
 
 export default {
   async fetch(request, env, ctx) {
+    console.log('🚀 Worker received request:', {
+      method: request.method,
+      url: request.url,
+      headers: Object.fromEntries(request.headers)
+    });
+
     // Handle CORS preflight requests
     if (request.method === 'OPTIONS') {
+      console.log('✅ Handling CORS preflight request');
       return new Response(null, {
         status: 200,
         headers: {
@@ -17,21 +24,40 @@ export default {
 
     // Only handle POST requests to /create-checkout-session
     if (request.method !== 'POST') {
+      console.log('❌ Method not allowed:', request.method);
       return new Response('Method not allowed', { status: 405 });
     }
 
     try {
+      console.log('📋 Parsing request body...');
       // Parse request body
       const { line_items, customer_info, shipping_info, metadata } = await request.json();
+      
+      console.log('📊 Request data received:', {
+        line_items_count: line_items?.length || 0,
+        has_customer_info: !!customer_info,
+        has_shipping_info: !!shipping_info,
+        has_metadata: !!metadata
+      });
 
       // Validate required fields
       if (!line_items || !Array.isArray(line_items) || line_items.length === 0) {
+        console.log('❌ Invalid line_items:', line_items);
         return new Response(JSON.stringify({ error: 'Invalid line_items' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         });
       }
 
+      // Check environment variables
+      console.log('🔑 Environment check:', {
+        has_stripe_key: !!env.STRIPE_SECRET_KEY,
+        stripe_key_length: env.STRIPE_SECRET_KEY?.length || 0,
+        stripe_key_start: env.STRIPE_SECRET_KEY?.substring(0, 20) || 'undefined',
+        stripe_key_end: env.STRIPE_SECRET_KEY?.substring(env.STRIPE_SECRET_KEY.length - 10) || 'undefined'
+      });
+
+      console.log('💳 Creating Stripe checkout session...');
       // Create Stripe checkout session
       const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         method: 'POST',
@@ -53,8 +79,20 @@ export default {
         }),
       });
 
+      console.log('📡 Stripe API response:', {
+        status: stripeResponse.status,
+        ok: stripeResponse.ok,
+        statusText: stripeResponse.statusText
+      });
+
       if (!stripeResponse.ok) {
-        return new Response(JSON.stringify({ error: 'Stripe API error' }), {
+        const errorText = await stripeResponse.text();
+        console.log('❌ Stripe API error:', {
+          status: stripeResponse.status,
+          statusText: stripeResponse.statusText,
+          errorText: errorText
+        });
+        return new Response(JSON.stringify({ error: 'Stripe API error', details: errorText }), {
           status: 500,
           headers: {
             'Content-Type': 'application/json',
@@ -64,6 +102,7 @@ export default {
       }
 
       const session = await stripeResponse.json();
+      console.log('✅ Stripe session created successfully:', session.id);
 
       // Return session ID
       return new Response(JSON.stringify({ sessionId: session.id }), {
@@ -75,7 +114,12 @@ export default {
       });
 
     } catch (error) {
-      return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      console.log('💥 Worker error:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
