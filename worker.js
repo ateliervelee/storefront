@@ -58,25 +58,33 @@ export default {
       });
 
       console.log('💳 Creating Stripe checkout session...');
-      // Create Stripe checkout session
+      
+      // Create Stripe checkout session with prefilled data
+      const sessionParams = {
+        'mode': 'payment',
+        'success_url': `https://www.ateliervelee.com/success.html?session_id={CHECKOUT_SESSION_ID}`,
+        'cancel_url': `https://www.ateliervelee.com/cancel.html`,
+        'billing_address_collection': 'required',
+        'shipping_address_collection[allowed_countries][0]': 'HR',
+        ...flattenLineItems(line_items),
+        ...flattenShippingInfo(shipping_info || {}),
+        ...flattenMetadata(metadata || {}),
+      };
+      
+
+      
+      // Add customer email if provided
+      if (customer_info?.email) {
+        sessionParams['customer_email'] = customer_info.email;
+      }
+      
       const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          'mode': 'payment',
-          'success_url': `https://www.ateliervelee.com/success.html?session_id={CHECKOUT_SESSION_ID}`,
-          'cancel_url': `https://www.ateliervelee.com/cancel.html`,
-          'billing_address_collection': 'required',
-          'shipping_address_collection[allowed_countries][0]': 'HR',
-          'customer_email': customer_info?.email || '',
-          ...flattenLineItems(line_items),
-          ...flattenCustomerInfo(customer_info || {}),
-          ...flattenShippingInfo(shipping_info || {}),
-          ...flattenMetadata(metadata || {}),
-        }),
+        body: new URLSearchParams(sessionParams),
       });
 
       console.log('📡 Stripe API response:', {
@@ -160,42 +168,8 @@ function flattenLineItems(lineItems) {
   return params;
 }
 
-// Helper function to flatten customer info for URL encoding
-function flattenCustomerInfo(customerInfo) {
-  const params = {};
-  
-  if (customerInfo.name) {
-    params['customer_details[name]'] = customerInfo.name;
-  }
-  
-  if (customerInfo.email) {
-    params['customer_details[email]'] = customerInfo.email;
-  }
-  
-  if (customerInfo.phone) {
-    params['customer_details[phone]'] = customerInfo.phone;
-  }
-  
-  if (customerInfo.address) {
-    if (customerInfo.address.line1) {
-      params['customer_details[address][line1]'] = customerInfo.address.line1;
-    }
-    if (customerInfo.address.line2) {
-      params['customer_details[address][line2]'] = customerInfo.address.line2;
-    }
-    if (customerInfo.address.city) {
-      params['customer_details[address][city]'] = customerInfo.address.city;
-    }
-    if (customerInfo.address.postal_code) {
-      params['customer_details[address][postal_code]'] = customerInfo.address.postal_code;
-    }
-    if (customerInfo.address.country) {
-      params['customer_details[address][country]'] = customerInfo.address.country;
-    }
-  }
-  
-  return params;
-}
+// Note: Customer info is now handled by creating a Stripe customer first
+// This allows proper prefilling of all fields in Stripe Checkout
 
 // Helper function to flatten shipping info for URL encoding
 function flattenShippingInfo(shippingInfo) {
