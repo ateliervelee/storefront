@@ -41,8 +41,8 @@ export default {
         },
         body: new URLSearchParams({
           'mode': 'payment',
-          'success_url': `${getOrigin(request)}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-          'cancel_url': `${getOrigin(request)}/cancel.html`,
+          'success_url': `https://www.ateliervelee.com/success.html?session_id={CHECKOUT_SESSION_ID}`,
+          'cancel_url': `https://www.ateliervelee.com/cancel.html`,
           'billing_address_collection': 'required',
           'shipping_address_collection[allowed_countries][0]': 'HR',
           'customer_email': customer_email || '',
@@ -52,8 +52,6 @@ export default {
       });
 
       if (!stripeResponse.ok) {
-        const errorText = await stripeResponse.text();
-        console.error('Stripe API error:', errorText);
         return new Response(JSON.stringify({ error: 'Stripe API error' }), {
           status: 500,
           headers: {
@@ -75,7 +73,6 @@ export default {
       });
 
     } catch (error) {
-      console.error('Worker error:', error);
       return new Response(JSON.stringify({ error: 'Internal server error' }), {
         status: 500,
         headers: {

@@ -15,11 +15,8 @@ class CheckoutManager {
 
     async init() {
         try {
-            console.log('🚀 CheckoutManager: Starting initialization...');
-            
             // Wait for Firebase services to be available
             await this.waitForFirebase();
-            console.log('⏳ CheckoutManager: Firebase ready, setting up components...');
             
             // Initialize cart manager
             this.cartManager = new ShoppingCart();
@@ -48,9 +45,8 @@ class CheckoutManager {
             // Setup checkout options
             this.setupCheckoutOptions();
             
-            console.log('✅ CheckoutManager: Initialization complete');
         } catch (error) {
-            console.error('❌ CheckoutManager: Initialization failed:', error);
+            console.error('CheckoutManager initialization failed:', error);
         }
     }
 
@@ -567,9 +563,6 @@ class CheckoutManager {
             }));
 
             // Create checkout session via Cloudflare Worker
-            console.log('Creating Stripe checkout session...');
-            
-            // Use Cloudflare Worker endpoint
             const workerUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 ? '/create-checkout-session' // Local development uses Node.js server
                 : 'https://atelier-velee-payments.ateliervelee.workers.dev'; // Production uses Cloudflare Worker
@@ -596,7 +589,6 @@ class CheckoutManager {
             }
 
             const { sessionId } = await response.json();
-            console.log('Checkout session created:', sessionId);
             
             // Clear cart before redirecting to payment
             this.cartManager.clearCart();
@@ -607,12 +599,10 @@ class CheckoutManager {
             });
 
             if (error) {
-                console.error('Stripe redirect error:', error);
                 throw new Error(error.message);
             }
 
         } catch (error) {
-            console.error('Order placement error:', error);
             alert('Failed to process payment. Please try again.');
         } finally {
             // Hide loading state on all buttons

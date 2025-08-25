@@ -30,6 +30,9 @@
                 
                 <h1>Payment Successful!</h1>
                 <p>Thank you for your order. You will receive a confirmation email shortly.</p>
+                <div id="orderDetails" style="display: none;">
+                    <p><strong>Order ID:</strong> <span id="orderId"></span></p>
+                </div>
                 
                 <div class="success-actions">
                     <a href="/" class="btn-primary">Continue Shopping</a>
@@ -42,14 +45,37 @@
     <footer-placeholder></footer-placeholder>
 
     <script src="script.js"></script>
+    <script src="cart.js"></script>
     <script>
-        // Set current year in footer
+        // Set current year in footer and clear cart
         document.addEventListener('DOMContentLoaded', async () => {
             await loadComponent('footer.html', 'footer-placeholder');
             const currentYear = new Date().getFullYear();
             const yearElement = document.getElementById('currentYear');
             if (yearElement) {
                 yearElement.textContent = currentYear;
+            }
+            
+            // Clear the cart since payment was successful
+            if (window.CartManager) {
+                const cartManager = new CartManager();
+                cartManager.clearCart();
+            }
+            
+            // Also clear any localStorage cart data directly as backup
+            localStorage.removeItem('cart');
+            localStorage.removeItem('pendingOrder');
+            
+            // Show order details if session_id is present
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            if (sessionId) {
+                const orderDetailsDiv = document.getElementById('orderDetails');
+                const orderIdSpan = document.getElementById('orderId');
+                if (orderDetailsDiv && orderIdSpan) {
+                    orderIdSpan.textContent = sessionId;
+                    orderDetailsDiv.style.display = 'block';
+                }
             }
         });
     </script>
