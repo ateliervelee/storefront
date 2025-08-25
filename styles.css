@@ -1700,6 +1700,32 @@ p {
     margin-bottom: 2rem;
 }
 
+#orderDetails {
+    background: var(--soft-beige);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
+#orderDetails p {
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+#orderId {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    display: inline-block;
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
 .success-actions,
 .cancel-actions {
     display: flex;
@@ -1715,7 +1741,10 @@ p {
     text-decoration: none;
     font-weight: 600;
     transition: var(--smooth);
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .btn-primary {
