@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
 // Create Stripe Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
     try {
-        const { line_items, customer_email, metadata } = req.body;
+        const { line_items, customer_info, shipping_info, metadata } = req.body;
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -29,7 +29,13 @@ app.post('/create-checkout-session', async (req, res) => {
             shipping_address_collection: {
                 allowed_countries: ['HR']
             },
-            customer_email: customer_email,
+            customer_email: customer_info?.email,
+            customer_details: customer_info ? {
+                name: customer_info.name,
+                email: customer_info.email,
+                phone: customer_info.phone,
+                address: customer_info.address
+            } : undefined,
             metadata: metadata
         });
 

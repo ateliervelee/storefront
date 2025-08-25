@@ -567,6 +567,31 @@ class CheckoutManager {
                 ? '/create-checkout-session' // Local development uses Node.js server
                 : 'https://atelier-velee-payments.ateliervelee.workers.dev'; // Production uses Cloudflare Worker
             
+            // Prepare customer data for Stripe prefill
+            const customerInfo = {
+                email: formData.billing.email,
+                name: `${formData.billing.firstName} ${formData.billing.lastName}`,
+                address: {
+                    line1: formData.billing.address,
+                    line2: formData.billing.addressDetails || undefined,
+                    city: formData.billing.city,
+                    postal_code: formData.billing.postcode,
+                    country: 'HR' // Croatia
+                },
+                phone: formData.billing.phone || undefined
+            };
+
+            // Use shipping address if different from billing
+            const shippingInfo = formData.options.sameAsBilling 
+                ? customerInfo.address 
+                : {
+                    line1: formData.shipping.address,
+                    line2: formData.shipping.addressDetails || undefined,
+                    city: formData.shipping.city,
+                    postal_code: formData.shipping.postcode,
+                    country: 'HR'
+                };
+            
             const response = await fetch(workerUrl, {
                 method: 'POST',
                 headers: {
@@ -574,7 +599,8 @@ class CheckoutManager {
                 },
                 body: JSON.stringify({
                     line_items: lineItems,
-                    customer_email: formData.billing.email,
+                    customer_info: customerInfo,
+                    shipping_info: shippingInfo,
                     metadata: {
                         orderId: Date.now().toString(),
                         userId: this.currentUser?.uid || 'guest',
