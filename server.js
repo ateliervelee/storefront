@@ -1,5 +1,22 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_51RzZOKLtKPQT2y5pNEED_YOUR_SECRET_KEY_HERE');
+
+// Debug logging for environment variables
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
+
+console.log('🔑 Environment Debug:');
+console.log('- Stripe Key exists:', !!process.env.STRIPE_SECRET_KEY);
+if (stripeKey) {
+    console.log('- Key length:', stripeKey.length);
+    console.log('- Key starts with:', stripeKey.substring(0, 20) + '...');
+    console.log('- Key ends with:', '...' + stripeKey.substring(stripeKey.length - 10));
+} else {
+    console.log('- ❌ No STRIPE_SECRET_KEY environment variable set!');
+}
+
+console.log('- Allowed Origin:', allowedOrigin || 'Not set (will use localhost:8000)');
+
+const stripe = require('stripe')(stripeKey);
 const path = require('path');
 
 const app = express();
@@ -23,8 +40,8 @@ app.post('/create-checkout-session', async (req, res) => {
             payment_method_types: ['card'],
             mode: 'payment',
             line_items: line_items,
-            success_url: `${req.headers.origin || 'http://localhost:8000'}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin || 'http://localhost:8000'}/cancel.html`,
+            success_url: `${req.headers.origin || process.env.ALLOWED_ORIGIN || 'http://localhost:8000'}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin || process.env.ALLOWED_ORIGIN || 'http://localhost:8000'}/cancel.html`,
             billing_address_collection: 'required',
             shipping_address_collection: {
                 allowed_countries: ['HR']
