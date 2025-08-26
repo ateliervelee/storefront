@@ -45,6 +45,9 @@ class CheckoutManager {
             // Setup checkout options
             this.setupCheckoutOptions();
             
+            // Check if user returned from Stripe and reset loading state
+            this.checkPendingCheckout();
+            
         } catch (error) {
             console.error('CheckoutManager initialization failed:', error);
         }
@@ -535,11 +538,15 @@ class CheckoutManager {
         }));
 
         try {
+            // Immediately disable buttons to prevent double-clicks
+            loadingElements.forEach(({ button }) => {
+                button.disabled = true;
+            });
+            
             // Show loading state on all buttons
             loadingElements.forEach(({ button, loading, text }) => {
                 text.style.visibility = 'hidden';
                 loading.style.display = 'flex';
-                button.disabled = true;
             });
 
             // Collect form data
@@ -631,8 +638,15 @@ class CheckoutManager {
 
             const { sessionId } = await response.json();
             
-            // Clear cart before redirecting to payment
-            this.cartManager.clearCart();
+            // Store cart data temporarily in case user comes back from Stripe
+            localStorage.setItem('pendingCheckout', 'true');
+            
+            // Re-enable buttons and hide spinners just before redirecting to Stripe
+            loadingElements.forEach(({ button, loading, text }) => {
+                button.disabled = false;
+                loading.style.display = 'none';
+                text.style.visibility = 'visible';
+            });
             
             // Redirect to Stripe Checkout
             const { error } = await this.stripe.redirectToCheckout({
@@ -864,6 +878,34 @@ class CheckoutManager {
         [companyName, vatId].forEach(input => {
             if (input) input.classList.remove('valid', 'invalid');
         });
+    }
+
+    checkPendingCheckout() {
+        // Check if user was redirected back from Stripe
+        const pendingCheckout = localStorage.getItem('pendingCheckout');
+        if (pendingCheckout === 'true') {
+            console.log('👤 User returned from Stripe checkout, resetting loading state');
+            
+            // Clear the pending flag
+            localStorage.removeItem('pendingCheckout');
+            
+            // Reset loading state on all pay buttons
+            const payButtons = [
+                document.getElementById('placeOrderBtn'),
+                document.getElementById('mobilePayBtn')
+            ];
+            
+            payButtons.forEach(button => {
+                if (button) {
+                    const textElement = button.querySelector('span');
+                    const loadingElement = button.querySelector('.order-loading');
+                    
+                    if (textElement) textElement.style.visibility = 'visible';
+                    if (loadingElement) loadingElement.style.display = 'none';
+                    button.disabled = false;
+                }
+            });
+        }
     }
 }
 
