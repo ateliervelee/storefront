@@ -1650,6 +1650,13 @@ p {
     margin: 0;
 }
 
+/* Hide mobile pay button on desktop */
+@media (min-width: 1025px) {
+    .mobile-full-btn {
+        display: none !important;
+    }
+}
+
 /* Success and Cancel pages */
 .success-main,
 .cancel-main {
