@@ -44,6 +44,10 @@
 
     <footer-placeholder></footer-placeholder>
 
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="script.js"></script>
     <script src="cart.js"></script>
     <script>
@@ -66,6 +70,10 @@
             localStorage.removeItem('cart');
             localStorage.removeItem('pendingOrder');
             
+            // Clear form data since order is complete
+            localStorage.removeItem('pendingFormData');
+            console.log('🧹 Cleared form data after successful payment');
+            
             // Show order details if session_id is present
             const urlParams = new URLSearchParams(window.location.search);
             const sessionId = urlParams.get('session_id');
@@ -76,8 +84,135 @@
                     orderIdSpan.textContent = sessionId;
                     orderDetailsDiv.style.display = 'block';
                 }
+                
+                // Update order status in Firebase
+                await updateOrderStatus(sessionId);
             }
         });
+
+        // Function to update order status after successful payment
+        async function updateOrderStatus(stripeSessionId) {
+            try {
+                console.log('🔄 Updating order status for Stripe session:', stripeSessionId);
+                
+                // Wait for Firebase to be ready
+                if (!window.firebase || !window.firebase.firestore) {
+                    console.warn('Firebase not ready, skipping order status update');
+                    return;
+                }
+
+                const db = firebase.firestore();
+                
+                console.log('🔍 Searching for order with session ID:', stripeSessionId);
+                
+                // First, try to find any order with this session ID (without status filter)
+                const allOrdersQuery = db.collection('orders')
+                    .where('stripeSessionId', '==', stripeSessionId)
+                    .limit(5);
+
+                console.log('🔍 Searching all orders with session ID...');
+                const allOrdersSnapshot = await allOrdersQuery.get();
+                
+                console.log('📊 Found orders with session ID:', {
+                    count: allOrdersSnapshot.size,
+                    orders: allOrdersSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        data: {
+                            orderNumber: doc.data().orderNumber,
+                            status: doc.data().status,
+                            paymentStatus: doc.data().paymentStatus,
+                            stripeSessionId: doc.data().stripeSessionId
+                        }
+                    }))
+                });
+                
+                // Find the order with the matching Stripe session ID and pending payment status
+                const ordersQuery = db.collection('orders')
+                    .where('stripeSessionId', '==', stripeSessionId)
+                    .where('status', '==', 'pending_payment')
+                    .limit(1);
+
+                console.log('🔍 Searching for pending orders with session ID...');
+                const querySnapshot = await ordersQuery.get();
+
+                if (!querySnapshot.empty) {
+                    const orderDoc = querySnapshot.docs[0];
+                    const orderId = orderDoc.id;
+                    const orderData = orderDoc.data();
+                    
+                    console.log('📋 Found pending order to update:', {
+                        orderId: orderId,
+                        orderNumber: orderData.orderNumber,
+                        currentStatus: orderData.status,
+                        currentPaymentStatus: orderData.paymentStatus
+                    });
+
+                    // Update order status and payment status
+                    await db.collection('orders').doc(orderId).update({
+                        status: 'payment_success',
+                        paymentStatus: 'paid',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        paidAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    console.log('✅ Order status updated successfully:', {
+                        orderId: orderId,
+                        newStatus: 'payment_success',
+                        newPaymentStatus: 'paid'
+                    });
+
+                    // Update the displayed order ID to show the actual order number instead of session ID
+                    const orderIdSpan = document.getElementById('orderId');
+                    if (orderIdSpan && orderData.orderNumber) {
+                        orderIdSpan.textContent = `#${orderData.orderNumber}`;
+                    }
+                } else {
+                    console.warn('⚠️ No pending order found for Stripe session:', stripeSessionId);
+                    
+                    // Fallback: Try to update any order with this session ID (even if not pending)
+                    if (!allOrdersSnapshot.empty) {
+                        console.log('🔄 Fallback: Updating any order with this session ID...');
+                        const orderDoc = allOrdersSnapshot.docs[0];
+                        const orderId = orderDoc.id;
+                        const orderData = orderDoc.data();
+                        
+                        console.log('📋 Found order for fallback update:', {
+                            orderId: orderId,
+                            orderNumber: orderData.orderNumber,
+                            currentStatus: orderData.status,
+                            currentPaymentStatus: orderData.paymentStatus
+                        });
+
+                        // Only update if not already paid
+                        if (orderData.paymentStatus !== 'paid') {
+                            await db.collection('orders').doc(orderId).update({
+                                status: 'payment_success',
+                                paymentStatus: 'paid',
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                paidAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            console.log('✅ Fallback order status updated successfully');
+                            
+                            // Update the displayed order ID
+                            const orderIdSpan = document.getElementById('orderId');
+                            if (orderIdSpan && orderData.orderNumber) {
+                                orderIdSpan.textContent = `#${orderData.orderNumber}`;
+                            }
+                        } else {
+                            console.log('ℹ️ Order already marked as paid, no update needed');
+                        }
+                    } else {
+                        console.error('❌ No order found with session ID:', stripeSessionId);
+                    }
+                }
+
+            } catch (error) {
+                console.error('❌ Error updating order status:', error);
+                // Don't throw the error - we don't want to break the success page
+                // if the status update fails, the payment was still successful
+            }
+        }
     </script>
 </body>
 </html> 

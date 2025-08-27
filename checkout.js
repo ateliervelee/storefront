@@ -196,20 +196,38 @@ class CheckoutManager {
         });
 
         // Auth state listener
-        this.auth.onAuthStateChanged((user) => {
-            console.log('🔐 Auth state changed:', user ? 'User signed in' : 'User signed out');
+        this.auth.onAuthStateChanged(async (user) => {
+            console.log('🔐 Auth state changed:', user ? `User signed in (${user.isAnonymous ? 'anonymous' : 'authenticated'})` : 'User signed out');
+            
+            // If no user, sign in anonymously
+            if (!user) {
+                try {
+                    console.log('👤 No user found, signing in anonymously...');
+                    await this.auth.signInAnonymously();
+                    console.log('✅ Anonymous sign-in successful');
+                    return; // onAuthStateChanged will be called again with the new user
+                } catch (error) {
+                    console.error('❌ Anonymous sign-in failed:', error);
+                    return;
+                }
+            }
+            
             if (user) {
                 console.log('👤 User details:', {
                     uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL
+                    email: user.email || 'N/A (anonymous)',
+                    displayName: user.displayName || 'N/A (anonymous)',
+                    isAnonymous: user.isAnonymous
                 });
             }
             
             this.currentUser = user;
             this.updateAuthUI(user);
-            this.prefillUserData(user);
+            
+            // Only prefill form data for authenticated (non-anonymous) users
+            if (user && !user.isAnonymous) {
+                this.prefillUserData(user);
+            }
         });
 
         // No need for redirect result handling since we're using popup
@@ -244,15 +262,15 @@ class CheckoutManager {
             userEmail: !!userEmail
         });
 
-        if (user) {
-            console.log('👤 User is signed in - hiding auth section');
-            // Hide the entire auth section when user is signed in
+        if (user && !user.isAnonymous) {
+            console.log('👤 User is authenticated - hiding auth section');
+            // Hide the entire auth section when user is authenticated (not anonymous)
             if (authSection) {
                 authSection.style.display = 'none';
                 console.log('✅ Auth section hidden');
             }
             
-            // Still update the signed-in UI elements in case they're used elsewhere
+            // Update the signed-in UI elements
             if (signedOut) signedOut.style.display = 'none';
             if (signedIn) signedIn.style.display = 'block';
             
@@ -260,8 +278,8 @@ class CheckoutManager {
             if (userName) userName.textContent = user.displayName || 'User';
             if (userEmail) userEmail.textContent = user.email;
         } else {
-            console.log('🚫 User is not signed in - showing auth section');
-            // Show the auth section when user is not signed in
+            console.log(user && user.isAnonymous ? '👤 User is anonymous - showing auth section' : '🚫 User is not signed in - showing auth section');
+            // Show the auth section for anonymous users or when no user is signed in
             if (authSection) {
                 authSection.style.display = 'block';
                 console.log('✅ Auth section shown');
@@ -278,24 +296,37 @@ class CheckoutManager {
         const lastNameField = document.getElementById('lastName');
 
         if (user) {
-            // Prefill email
-            emailField.value = user.email || '';
+            console.log('👤 Prefilling user data for:', user.email);
             
-            // Prefill name - split displayName into first and last name
+            // Only prefill email if field is empty
+            if (emailField && (!emailField.value || emailField.value.trim() === '')) {
+                emailField.value = user.email || '';
+                console.log('📧 Prefilled email:', user.email);
+            } else {
+                console.log('📧 Email field already has value, keeping:', emailField?.value);
+            }
+            
+            // Only prefill name if fields are empty and displayName exists
             if (user.displayName) {
                 const nameParts = user.displayName.trim().split(' ');
-                if (nameParts.length >= 1) {
+                
+                if (firstNameField && (!firstNameField.value || firstNameField.value.trim() === '') && nameParts.length >= 1) {
                     firstNameField.value = nameParts[0];
+                    console.log('👤 Prefilled first name:', nameParts[0]);
+                } else {
+                    console.log('👤 First name field already has value, keeping:', firstNameField?.value);
                 }
-                if (nameParts.length >= 2) {
+                
+                if (lastNameField && (!lastNameField.value || lastNameField.value.trim() === '') && nameParts.length >= 2) {
                     lastNameField.value = nameParts.slice(1).join(' ');
+                    console.log('👤 Prefilled last name:', nameParts.slice(1).join(' '));
+                } else {
+                    console.log('👤 Last name field already has value, keeping:', lastNameField?.value);
                 }
             }
         } else {
-            // Clear fields when signed out
-            emailField.value = '';
-            firstNameField.value = '';
-            lastNameField.value = '';
+            // Only clear fields if they're empty (don't clear user-entered data when signing out)
+            console.log('🚫 User signed out - NOT clearing fields to preserve user data');
         }
     }
 
@@ -638,6 +669,10 @@ class CheckoutManager {
 
             const { sessionId } = await response.json();
             
+            // Create order in Firebase before redirecting to Stripe
+            const orderId = await this.createOrder(formData, cartItems, sessionId);
+            console.log('📋 Order created with ID:', orderId);
+            
             // Store cart data temporarily in case user comes back from Stripe
             localStorage.setItem('pendingCheckout', 'true');
             
@@ -867,6 +902,238 @@ class CheckoutManager {
         });
     }
 
+    async findExistingPendingOrder() {
+        if (!this.db || !this.currentUser) {
+            return null;
+        }
+
+        try {
+            console.log('🔍 Checking for existing pending orders for user:', this.currentUser.uid);
+            
+            // Query orders that match the user's UID and are pending payment
+            const ordersQuery = this.db.collection('orders')
+                .where('customerId', '==', this.currentUser.uid)
+                .where('status', '==', 'pending_payment')
+                .orderBy('createdAt', 'desc')
+                .limit(1);
+
+            const querySnapshot = await ordersQuery.get();
+
+            if (!querySnapshot.empty) {
+                const orderDoc = querySnapshot.docs[0];
+                const orderData = orderDoc.data();
+                console.log('📋 Found existing pending order:', {
+                    orderId: orderDoc.id,
+                    customerId: orderData.customerId,
+                    status: orderData.status,
+                    orderNumber: orderData.orderNumber
+                });
+                return orderDoc;
+            } else {
+                console.log('📋 No existing pending order found');
+                return null;
+            }
+        } catch (error) {
+            console.error('❌ Error checking existing orders:', error);
+            return null;
+        }
+    }
+
+    async createOrder(formData, cartItems, stripeSessionId) {
+        if (!this.db) {
+            console.warn('Firebase not available, skipping order creation');
+            return null;
+        }
+
+        if (!this.currentUser) {
+            console.error('❌ No authenticated user found for order creation');
+            throw new Error('User must be authenticated to create an order');
+        }
+
+        try {
+            // Check if there's an existing pending order for this user
+            const existingOrder = await this.findExistingPendingOrder();
+            let orderId, orderNumber, isUpdatingExisting = false;
+
+            if (existingOrder) {
+                // Update existing order
+                orderId = existingOrder.id;
+                orderNumber = existingOrder.data().orderNumber;
+                isUpdatingExisting = true;
+                console.log('📝 Updating existing order:', { orderId, orderNumber, customerId: this.currentUser.uid });
+            } else {
+                // Create new order
+                orderId = Date.now().toString();
+                orderNumber = await this.getNextOrderNumber();
+                console.log('📝 Creating new order:', { orderId, orderNumber, customerId: this.currentUser.uid });
+            }
+            
+            // Transform cart items to order format
+            const orderItems = cartItems.map(item => ({
+                productId: item.productId || '',
+                variantId: item.variantId || '',
+                productName: item.product?.name || '',
+                variantSku: `${item.product?.name || ''}-${item.variant?.size || ''}-${item.variant?.color || ''}`, // Generate SKU
+                size: item.variant?.size || '',
+                color: item.variant?.color || '',
+                quantity: item.quantity || 0,
+                unitPrice: item.variant?.price || 0, // Price in cents
+                totalPrice: (item.variant?.price || 0) * (item.quantity || 0),
+                productImage: item.product?.images?.[0] || '' // Include first product image
+            }));
+
+            // Calculate totals
+            const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+            const tax = 0; // Default to 0 as specified
+            const shipping = 0; // Free shipping in Croatia
+            const total = subtotal + tax + shipping;
+
+            // Create order object - ensure no undefined values
+            const order = {
+                // Order identification
+                orderId: orderId,
+                orderNumber: orderNumber,
+                
+                // Customer information
+                customerId: this.currentUser.uid, // Always available since we ensure user is authenticated
+                customerEmail: formData.billing?.email || '',
+                isAnonymous: this.currentUser.isAnonymous, // Track if this was an anonymous user
+                
+                // Order status
+                status: 'pending_payment',
+                paymentStatus: 'pending',
+                
+                // Items and pricing
+                items: orderItems,
+                subtotal: subtotal,
+                tax: tax,
+                shipping: shipping,
+                total: total,
+                currency: 'EUR',
+                
+                // Customer details
+                billing: {
+                    firstName: formData.billing?.firstName || '',
+                    lastName: formData.billing?.lastName || '',
+                    email: formData.billing?.email || '',
+                    phone: formData.billing?.phone || '',
+                    address: formData.billing?.address || '',
+                    addressDetails: formData.billing?.addressDetails || '',
+                    city: formData.billing?.city || '',
+                    postcode: formData.billing?.postcode || '',
+                    country: formData.billing?.country || ''
+                },
+                
+                // Payment information
+                stripeSessionId: stripeSessionId,
+                
+                // Timestamps
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                
+                // Additional fields
+                notes: ''
+            };
+
+            // Add shipping address only if different from billing
+            if (formData.shipping) {
+                order.shipping = {
+                    firstName: formData.shipping.firstName || '',
+                    lastName: formData.shipping.lastName || '',
+                    phone: formData.shipping.phone || '',
+                    address: formData.shipping.address || '',
+                    addressDetails: formData.shipping.addressDetails || '',
+                    city: formData.shipping.city || '',
+                    postcode: formData.shipping.postcode || '',
+                    country: formData.shipping.country || ''
+                };
+            } else {
+                order.shipping = null;
+            }
+
+            // Add company details only if provided
+            if (formData.company && (formData.company.name || formData.company.vatId)) {
+                order.company = {
+                    name: formData.company.name || '',
+                    vatId: formData.company.vatId || ''
+                };
+            } else {
+                order.company = null;
+            }
+
+            // Add fulfillment tracking
+            order.fulfillment = {
+                status: 'pending',
+                trackingNumber: null,
+                shippedAt: null,
+                deliveredAt: null
+            };
+
+            // No need for guest session tokens since we use Firebase Anonymous Auth
+
+            // Save order to Firestore
+            if (isUpdatingExisting) {
+                // Update existing order (preserve createdAt, update updatedAt)
+                delete order.createdAt; // Don't overwrite the original creation date
+                console.log('🔄 Updating Firebase order:', {
+                    orderId: orderId,
+                    customerId: this.currentUser.uid,
+                    isAnonymous: this.currentUser.isAnonymous,
+                    userEmail: this.currentUser.email || 'Anonymous'
+                });
+                
+                await this.db.collection('orders').doc(orderId).update(order);
+                console.log('✅ Order updated successfully:', orderId);
+            } else {
+                // Create new order
+                console.log('🔄 Creating Firebase order:', {
+                    orderId: orderId,
+                    customerId: this.currentUser.uid,
+                    isAnonymous: this.currentUser.isAnonymous,
+                    userEmail: this.currentUser.email || 'Anonymous'
+                });
+                
+                await this.db.collection('orders').doc(orderId).set(order);
+                console.log('✅ Order created successfully:', orderId);
+            }
+            
+            return orderId;
+            
+        } catch (error) {
+            console.error('❌ Error creating order:', error);
+            throw error;
+        }
+    }
+
+    async getNextOrderNumber() {
+        try {
+            const counterRef = this.db.collection('orderNumbers').doc('counter');
+            
+            // Use a transaction to safely increment the counter
+            const result = await this.db.runTransaction(async (transaction) => {
+                const counterDoc = await transaction.get(counterRef);
+                
+                if (!counterDoc.exists) {
+                    // Initialize counter if it doesn't exist
+                    const initialNumber = 1000; // Start from 1000
+                    transaction.set(counterRef, { next: initialNumber + 1 });
+                    return initialNumber;
+                } else {
+                    const currentNext = counterDoc.data().next;
+                    transaction.update(counterRef, { next: currentNext + 1 });
+                    return currentNext;
+                }
+            });
+            
+            return result;
+            
+        } catch (error) {
+            console.error('❌ Error getting order number:', error);
+            // Fallback to timestamp-based number if counter fails
+            return parseInt(Date.now().toString().slice(-6));
+        }
+    }
+
     clearCompanyData() {
         const companyName = document.getElementById('companyName');
         const vatId = document.getElementById('vatId');
@@ -879,6 +1146,8 @@ class CheckoutManager {
             if (input) input.classList.remove('valid', 'invalid');
         });
     }
+
+
 
     checkPendingCheckout() {
         // Check if user was redirected back from Stripe
@@ -907,6 +1176,10 @@ class CheckoutManager {
             });
         }
     }
+
+
+
+
 }
 
 // Component loader function (same as script.js)

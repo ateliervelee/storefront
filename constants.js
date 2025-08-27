@@ -60,6 +60,27 @@ const PRODUCT_CONSTANTS = {
             currency: 'EUR'
         }
         // More countries will be added via Firebase later
+    ],
+    
+    // Order statuses
+    orderStatuses: [
+        { value: 'pending_payment', label: 'Pending Payment' },
+        { value: 'payment_success', label: 'Payment Successful' },
+        { value: 'processing', label: 'Processing' },
+        { value: 'shipped', label: 'Shipped' },
+        { value: 'delivered', label: 'Delivered' },
+        { value: 'cancelled', label: 'Cancelled' },
+        { value: 'refunded', label: 'Refunded' },
+        { value: 'failed', label: 'Failed' }
+    ],
+    
+    // Payment statuses
+    paymentStatuses: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'failed', label: 'Failed' },
+        { value: 'cancelled', label: 'Cancelled' },
+        { value: 'refunded', label: 'Refunded' }
     ]
 };
 
