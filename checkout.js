@@ -205,6 +205,26 @@ class CheckoutManager {
                     console.log('👤 No user found, signing in anonymously...');
                     await this.auth.signInAnonymously();
                     console.log('✅ Anonymous sign-in successful');
+
+                    const auth = firebase.auth();
+                
+                    // Get the currently authenticated user
+                    const currentUser = auth.currentUser;
+                    if (currentUser) {
+                        console.log('👤 Authenticated user on success page:', {
+                            uid: currentUser.uid,
+                            email: currentUser.email || 'No email',
+                            isAnonymous: currentUser.isAnonymous,
+                            displayName: currentUser.displayName || 'No display name'
+                        });
+                    } else {
+                        console.log('🚫 No authenticated user found on success page');
+                    } 
+
+                    console.log('🔍 Searching for order with session ID:', "cs_test_a12h56cRTODguAkKqoHdunS98n7pPaOW773124z8svKlmlZnQoMiqIkewe");
+                
+
+
                     return; // onAuthStateChanged will be called again with the new user
                 } catch (error) {
                     console.error('❌ Anonymous sign-in failed:', error);
@@ -219,6 +239,30 @@ class CheckoutManager {
                     displayName: user.displayName || 'N/A (anonymous)',
                     isAnonymous: user.isAnonymous
                 });
+
+                const db = firebase.firestore();    
+
+                                    // First, try to find any order with this session ID (without status filter)
+                                    const allOrdersQuery = db.collection('orders')
+                                    .where('customerId', '==', user.uid) 
+                                    .where('stripeSessionId', '==', "cs_test_a12h56cRTODguAkKqoHdunS98n7pPaOW773124z8svKlmlZnQoMiqIkewe")
+                                    .limit(5);
+                
+                                console.log('🔍 Searching all orders with session ID...');
+                                const allOrdersSnapshot = await allOrdersQuery.get();
+                                
+                                console.log('📊 Found orders with session ID:', {
+                                    count: allOrdersSnapshot.size,
+                                    orders: allOrdersSnapshot.docs.map(doc => ({
+                                        id: doc.id,
+                                        data: {
+                                            orderNumber: doc.data().orderNumber,
+                                            status: doc.data().status,
+                                            paymentStatus: doc.data().paymentStatus,
+                                            stripeSessionId: doc.data().stripeSessionId
+                                        }
+                                    }))
+                                });
             }
             
             this.currentUser = user;
