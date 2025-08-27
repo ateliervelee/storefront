@@ -84,9 +84,20 @@ const PRODUCT_CONSTANTS = {
     ]
 };
 
+// Cart and Storage Constants
+const STORAGE_CONSTANTS = {
+    cartKey: 'ateliervelee_cart',
+    pendingOrderKey: 'pendingOrder',
+    pendingFormDataKey: 'pendingFormData',
+    pendingCheckoutKey: 'pendingCheckout',
+    stripeSessionIdKey: 'stripeSessionId',
+    checkoutSessionIdKey: 'checkoutSessionId'
+};
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = PRODUCT_CONSTANTS;
+    module.exports = { PRODUCT_CONSTANTS, STORAGE_CONSTANTS };
 } else {
     window.PRODUCT_CONSTANTS = PRODUCT_CONSTANTS;
+    window.STORAGE_CONSTANTS = STORAGE_CONSTANTS;
 } 

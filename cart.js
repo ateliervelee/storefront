@@ -80,7 +80,7 @@ class ShoppingCart {
     // Load cart from localStorage with fallback
     loadCart() {
         try {
-            const savedCart = localStorage.getItem('ateliervelee_cart');
+            const savedCart = localStorage.getItem(STORAGE_CONSTANTS.cartKey);
             return savedCart ? JSON.parse(savedCart) : [];
         } catch (error) {
             console.warn('Error loading cart from localStorage:', error);
@@ -91,7 +91,7 @@ class ShoppingCart {
     // Save cart to localStorage
     saveCart() {
         try {
-            localStorage.setItem('ateliervelee_cart', JSON.stringify(this.cart));
+            localStorage.setItem(STORAGE_CONSTANTS.cartKey, JSON.stringify(this.cart));
         } catch (error) {
             console.warn('Error saving cart to localStorage:', error);
         }

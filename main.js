@@ -29,6 +29,11 @@ class ScriptLoader {
             },
             // Our custom scripts
             {
+                src: 'constants.js',
+                async: false,
+                defer: false
+            },
+            {
                 src: 'firebase-config.js',
                 async: false,
                 defer: false

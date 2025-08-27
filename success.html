@@ -47,238 +47,247 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="constants.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="script.js"></script>
     <script src="cart.js"></script>
     <script>
-        // Set current year in footer and clear cart
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadComponent('footer.html', 'footer-placeholder');
-            const currentYear = new Date().getFullYear();
-            const yearElement = document.getElementById('currentYear');
-            if (yearElement) {
-                yearElement.textContent = currentYear;
-            }
-            
-            // Clear the cart since payment was successful
-            if (window.CartManager) {
-                const cartManager = new CartManager();
-                cartManager.clearCart();
-            }
-            
-            // Also clear any localStorage cart data directly as backup
-            localStorage.removeItem('cart');
-            localStorage.removeItem('pendingOrder');
-            
-            // Clear form data since order is complete
-            localStorage.removeItem('pendingFormData');
-            console.log('🧹 Cleared form data after successful payment');
-            
-            // Set up Firebase Auth and wait for auth state (same as checkout page) - MOVED OUTSIDE sessionId check for debugging
-            if (window.firebase && window.firebase.auth) {
-                const auth = firebase.auth();
-                
-                // Set up Firebase Auth with persistence
-                try {
-                    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-                    console.log('✅ Firebase auth persistence set to LOCAL on success page');
-                } catch (persistenceError) {
-                    console.warn('⚠️ Could not set auth persistence on success page:', persistenceError);
-                }
-                
-                // Use onAuthStateChanged to wait for auth state (same as checkout page)
-                auth.onAuthStateChanged(async (user) => {
-                    console.log('🔐 Auth state changed on success page:', user ? `User: ${user.uid} (${user.isAnonymous ? 'anonymous' : 'authenticated'})` : 'No user');
-                    
-                    // If no user, sign in anonymously
-                    if (!user) {
-                        try {
-                            const anonymousUserCredential = await auth.signInAnonymously();
-                            user = anonymousUserCredential.user;
-                            console.log('✅ Signed in anonymously on success page:', user.uid);
-                        } catch (error) {
-                            console.error('❌ Anonymous sign-in failed on success page:', error);
-                            return;
-                        }
-                    }
-                    
-                    // Log detailed user info (same as checkout page)
-                    console.log('👤 Final authenticated user on success page:', {
-                        uid: user.uid,
-                        email: user.email || 'No email',
-                        isAnonymous: user.isAnonymous,
-                        displayName: user.displayName || 'No display name',
-                        refreshToken: user.refreshToken ? 'Present' : 'Missing',
-                        accessToken: user.accessToken ? 'Present' : 'Missing'
-                    });
-            
-                    // Show order details if session_id is present
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const sessionId = urlParams.get('session_id');
-                    if (sessionId) {
-                        const orderDetailsDiv = document.getElementById('orderDetails');
-                        const orderIdSpan = document.getElementById('orderId');
-                        if (orderDetailsDiv && orderIdSpan) {
-                            orderIdSpan.textContent = sessionId;
-                            orderDetailsDiv.style.display = 'block';
-                        }
-                        
-                        // Update order status in Firebase with authenticated user
-                        await updateOrderStatus(sessionId, user);
-                    } else {
-                        console.log('🔍 No session ID found, auth setup complete for debugging');
-                    }
-                });
-            } else {
-                console.warn('⚠️ Firebase auth not available');
-                
-                // Show order details if session_id is present (fallback without auth)
-                const urlParams = new URLSearchParams(window.location.search);
-                const sessionId = urlParams.get('session_id');
-                if (sessionId) {
-                    const orderDetailsDiv = document.getElementById('orderDetails');
-                    const orderIdSpan = document.getElementById('orderId');
-                    if (orderDetailsDiv && orderIdSpan) {
-                        orderIdSpan.textContent = sessionId;
-                        orderDetailsDiv.style.display = 'block';
-                    }
-                    await updateOrderStatus(sessionId, null);
-                }
-            }
-        });
+        // ---- Firebase Initialization
+        let app, auth, db;
 
-        // Function to update order status after successful payment
-        async function updateOrderStatus(stripeSessionId, user) {
+        function initFirebase() {
+            if (!window.firebase || !window.firebase.firestore || !window.firebase.auth) {
+                console.warn('Firebase not ready, skipping initialization');
+                return false;
+            }
+            
+            app = firebase.app();
+            auth = firebase.auth();
+            db = firebase.firestore();
+            
+            // Set persistence for auth state across page reloads
+            return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    console.log('✅ Firebase auth persistence set to LOCAL');
+                    return true;
+                })
+                .catch(error => {
+                    console.warn('⚠️ Could not set auth persistence:', error);
+                    return true; // Continue anyway
+                });
+        }
+
+        // ---- Component Loading Helper
+        async function loadComponent(url, containerId) {
             try {
-                console.log('🔄 Updating order status for Stripe session:', stripeSessionId);
-                
-                // Wait for Firebase to be ready
-                if (!window.firebase || !window.firebase.firestore) {
-                    console.warn('Firebase not ready, skipping order status update');
-                    return;
+                const response = await fetch(url);
+                const html = await response.text();
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = html;
+                } else {
+                    const placeholder = document.querySelector(containerId);
+                    if (placeholder) {
+                        placeholder.innerHTML = html;
+                    }
                 }
+            } catch (error) {
+                console.warn(`Failed to load component from ${url}:`, error);
+            }
+        }
 
-                const db = firebase.firestore();
-                
-                // Ensure we have a user
-                if (!user) {
-                    console.error('❌ No user provided for order status update');
-                    return;
-                }
-                
-                console.log('🔍 Searching for order with session ID:', stripeSessionId, 'for user:', user.uid);
-                
-                // First, try to find any order with this session ID (without status filter)
-                const allOrdersQuery = db.collection('orders')
-                    .where('customerId', '==', user.uid)
-                    .where('stripeSessionId', '==', stripeSessionId)
-                    .limit(5);
+        // ---- Cart Management
+        function clearCartData() {
+            console.log('🧹 Clearing cart data after successful payment...');
+            
+            // Clear all cart and checkout related data from localStorage using constants
+            localStorage.removeItem(STORAGE_CONSTANTS.cartKey);
+            localStorage.removeItem(STORAGE_CONSTANTS.pendingOrderKey);
+            localStorage.removeItem(STORAGE_CONSTANTS.pendingFormDataKey);
+            localStorage.removeItem(STORAGE_CONSTANTS.pendingCheckoutKey);
+            localStorage.removeItem(STORAGE_CONSTANTS.stripeSessionIdKey);
+            localStorage.removeItem(STORAGE_CONSTANTS.checkoutSessionIdKey);
+            
+            console.log('✅ Cart and checkout data cleared from localStorage');
+            
+            // Also clear the cart icon count if it exists
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) {
+                cartCount.textContent = '0';
+                cartCount.style.display = 'none';
+                console.log('🔄 Updated cart count display');
+            }
+        }
 
-                console.log('🔍 Searching all orders with session ID...');
-                const allOrdersSnapshot = await allOrdersQuery.get();
-                
-                console.log('📊 Found orders with session ID:', {
-                    count: allOrdersSnapshot.size,
-                    orders: allOrdersSnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        data: {
-                            orderNumber: doc.data().orderNumber,
-                            status: doc.data().status,
-                            paymentStatus: doc.data().paymentStatus,
-                            stripeSessionId: doc.data().stripeSessionId,
-                            customerId: doc.data().customerId
-                        }
-                    }))
-                });
-                
-                // Find the order with the matching Stripe session ID and pending payment status
+        // ---- Order Status Update
+        async function updateOrderStatusInFirebase(stripeSessionId, user) {
+            if (!stripeSessionId || !user) {
+                console.warn('⚠️ Missing session ID or user for order update');
+                return;
+            }
+
+            console.log('🔄 Updating order status for session:', stripeSessionId);
+            console.log('👤 User details:', {
+                uid: user.uid,
+                email: user.email || 'No email',
+                isAnonymous: user.isAnonymous,
+                displayName: user.displayName || 'No display name'
+            });
+
+            try {
+                // Query for orders with matching session ID and belonging to this user
                 const ordersQuery = db.collection('orders')
-                    .where('customerId', '==', user.uid)
                     .where('stripeSessionId', '==', stripeSessionId)
-                    .where('status', '==', 'pending_payment')
+                    .where('customerId', '==', user.uid)
                     .limit(1);
 
-                console.log('🔍 Searching for pending orders with session ID...');
                 const querySnapshot = await ordersQuery.get();
 
-                if (!querySnapshot.empty) {
-                    const orderDoc = querySnapshot.docs[0];
-                    const orderId = orderDoc.id;
-                    const orderData = orderDoc.data();
-                    
-                    console.log('📋 Found pending order to update:', {
-                        orderId: orderId,
-                        orderNumber: orderData.orderNumber,
-                        currentStatus: orderData.status,
-                        currentPaymentStatus: orderData.paymentStatus
-                    });
+                if (querySnapshot.empty) {
+                    console.warn('⚠️ No order found for session:', stripeSessionId);
+                    return;
+                }
 
-                    // Update order status and payment status
+                const orderDoc = querySnapshot.docs[0];
+                const orderData = orderDoc.data();
+                const orderId = orderDoc.id;
+
+                console.log('📋 Found order to update:', {
+                    orderId: orderId,
+                    orderNumber: orderData.orderNumber,
+                    currentStatus: orderData.status,
+                    currentPaymentStatus: orderData.paymentStatus
+                });
+
+                // Only update if not already paid
+                if (orderData.paymentStatus !== 'paid') {
                     await db.collection('orders').doc(orderId).update({
                         status: 'payment_success',
                         paymentStatus: 'paid',
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                         paidAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-
-                    console.log('✅ Order status updated successfully:', {
-                        orderId: orderId,
-                        newStatus: 'payment_success',
-                        newPaymentStatus: 'paid'
-                    });
-
-                    // Update the displayed order ID to show the actual order number instead of session ID
-                    const orderIdSpan = document.getElementById('orderId');
-                    if (orderIdSpan && orderData.orderNumber) {
-                        orderIdSpan.textContent = `#${orderData.orderNumber}`;
-                    }
+                    console.log('✅ Order status updated successfully to payment_success/paid');
                 } else {
-                    console.warn('⚠️ No pending order found for Stripe session:', stripeSessionId);
-                    
-                    // Fallback: Try to update any order with this session ID (even if not pending)
-                    if (!allOrdersSnapshot.empty) {
-                        console.log('🔄 Fallback: Updating any order with this session ID...');
-                        const orderDoc = allOrdersSnapshot.docs[0];
-                        const orderId = orderDoc.id;
-                        const orderData = orderDoc.data();
-                        
-                        console.log('📋 Found order for fallback update:', {
-                            orderId: orderId,
-                            orderNumber: orderData.orderNumber,
-                            currentStatus: orderData.status,
-                            currentPaymentStatus: orderData.paymentStatus
-                        });
-
-                        // Only update if not already paid
-                        if (orderData.paymentStatus !== 'paid') {
-                            await db.collection('orders').doc(orderId).update({
-                                status: 'payment_success',
-                                paymentStatus: 'paid',
-                                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                paidAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-
-                            console.log('✅ Fallback order status updated successfully');
-                            
-                            // Update the displayed order ID
-                            const orderIdSpan = document.getElementById('orderId');
-                            if (orderIdSpan && orderData.orderNumber) {
-                                orderIdSpan.textContent = `#${orderData.orderNumber}`;
-                            }
-                        } else {
-                            console.log('ℹ️ Order already marked as paid, no update needed');
-                        }
-                    } else {
-                        console.error('❌ No order found with session ID:', stripeSessionId);
-                    }
+                    console.log('ℹ️ Order already marked as paid, skipping update');
                 }
+
+                // Update displayed order ID with actual order number
+                updateOrderDisplay(orderData.orderNumber);
 
             } catch (error) {
                 console.error('❌ Error updating order status:', error);
-                // Don't throw the error - we don't want to break the success page
-                // if the status update fails, the payment was still successful
+                // Don't throw - we don't want to break the success page
             }
         }
+
+        // ---- UI Updates
+        function updateOrderDisplay(orderNumber) {
+            const orderIdSpan = document.getElementById('orderId');
+            if (orderIdSpan && orderNumber) {
+                orderIdSpan.textContent = `#${orderNumber}`;
+            }
+        }
+
+        function setupOrderDisplay(sessionId) {
+            if (!sessionId) {
+                const orderIdElement = document.getElementById('orderId');
+                if (orderIdElement) {
+                    orderIdElement.textContent = 'N/A';
+                }
+                console.warn('No Stripe session ID found in URL.');
+                return;
+            }
+
+            // Show order details
+            const orderDetailsDiv = document.getElementById('orderDetails');
+            const orderIdSpan = document.getElementById('orderId');
+            if (orderDetailsDiv && orderIdSpan) {
+                orderIdSpan.textContent = sessionId; // Will be updated later with order number
+                orderDetailsDiv.style.display = 'block';
+            }
+        }
+
+        // ---- Authentication & Order Processing
+        async function processSuccessPage() {
+            console.log('🚀 Processing success page...');
+
+            // Initialize Firebase
+            const firebaseReady = await initFirebase();
+            if (!firebaseReady) {
+                console.error('❌ Firebase initialization failed');
+                return;
+            }
+
+            // Get session ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
+            // Set up initial display
+            setupOrderDisplay(sessionId);
+            
+            if (!sessionId) {
+                console.warn('⚠️ No session ID found, skipping order update');
+                return;
+            }
+
+            // Use one-shot auth listener pattern to prevent loops
+            const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    console.log('🔐 No user found, signing in anonymously...');
+                    try {
+                        await auth.signInAnonymously();
+                        return; // Wait for the auth state change
+                    } catch (error) {
+                        console.error('❌ Failed to sign in anonymously:', error);
+                        unsubscribe();
+                        return;
+                    }
+                }
+
+                try {
+                    // Process the order update
+                    await updateOrderStatusInFirebase(sessionId, user);
+                    
+                    // Sign out anonymous user after successful processing
+                    if (user.isAnonymous) {
+                        console.log('🚪 Signing out anonymous user after successful processing');
+                        await auth.signOut();
+                    }
+                } catch (error) {
+                    console.error('❌ Error during order processing:', error);
+                } finally {
+                    // Always unsubscribe to prevent loops
+                    unsubscribe();
+                    console.log('🔄 Auth listener unsubscribed');
+                }
+            });
+
+            // Trigger auth check if user already exists
+            if (auth.currentUser) {
+                console.log('🔐 User already authenticated, triggering state change');
+            }
+        }
+
+        // ---- Page Initialization
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('📄 Success page loaded');
+
+            // Load footer component
+            await loadComponent('footer.html', 'footer-placeholder');
+            
+            // Set current year
+            const currentYear = new Date().getFullYear();
+            const yearElement = document.getElementById('currentYear');
+            if (yearElement) {
+                yearElement.textContent = currentYear;
+            }
+
+            // Process success page logic first (includes Firebase init)
+            await processSuccessPage();
+            
+            // Clear cart data after Firebase is ready
+            clearCartData();
+        });
     </script>
 </body>
 </html> 
