@@ -201,7 +201,6 @@
         }
 
         .header-container {
-            max-width: 1400px;
             margin: 0 auto;
             padding: 0.75rem 2rem;
             display: flex;
@@ -442,8 +441,13 @@
             display: block;
         }
 
-        /* Products Section Styles */
-        .products-section {
+        /* Admin Section Styles */
+        .admin-section {
+            margin-bottom: 3rem;
+        }
+
+        /* Admin Section Styles */
+        .admin-section {
             width: 100%;
             max-width: none;
             background: transparent;
@@ -454,7 +458,7 @@
             margin-top: 0;
         }
 
-                 .products-header {
+        .admin-header {
              border-bottom: 1px solid var(--soft-beige);
              padding-bottom: 1rem;
              margin-bottom: 2rem;
@@ -463,7 +467,7 @@
              align-items: center;
          }
 
-        .products-header h2 {
+        .admin-header h2 {
             font-family: var(--font-serif);
             font-size: 2rem;
             color: var(--charcoal);
@@ -471,7 +475,7 @@
             text-align: left;
         }
 
-        .products-header p {
+        .admin-header p {
             color: var(--deep-taupe);
             font-size: 1rem;
             margin-bottom: 0;
@@ -671,6 +675,364 @@
         .products-loading.show,
         .products-error.show {
             display: block;
+        }
+
+        /* Orders Section Styles - uses admin-section and admin-header styles */
+
+        .search-container-wide {
+            position: relative;
+            width: 400px;
+            max-width: 100%;
+        }
+
+        .search-container-wide .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--deep-taupe);
+            font-size: 1rem;
+            z-index: 2;
+        }
+
+        .search-input-wide {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 2px solid var(--soft-beige);
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            background: var(--warm-white);
+            color: var(--charcoal);
+            transition: var(--smooth);
+        }
+
+        .search-input-wide:focus {
+            border-color: var(--deep-taupe);
+            outline: none;
+        }
+
+        .orders-header h2 {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .orders-header p {
+            color: var(--deep-taupe);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .search-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 2px solid var(--soft-beige);
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            background: var(--warm-white);
+            color: var(--charcoal);
+            transition: var(--smooth);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(212, 197, 160, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--deep-taupe);
+            font-size: 1rem;
+        }
+
+        .orders-container {
+            background: var(--warm-white);
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--soft-beige);
+            overflow: hidden;
+        }
+
+        .orders-table-container {
+            overflow-x: auto;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-sans);
+        }
+
+        .orders-table th {
+            background: var(--primary-cream);
+            padding: 1.5rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--charcoal);
+            border-bottom: 2px solid var(--soft-beige);
+            white-space: nowrap;
+        }
+
+        .orders-table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--soft-beige);
+            font-size: 0.9rem;
+            color: var(--deep-taupe);
+            vertical-align: middle;
+        }
+
+        .orders-table tbody tr:hover {
+            background: var(--primary-cream);
+        }
+
+        .order-id {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--charcoal);
+            font-size: 0.8rem;
+        }
+
+        .order-customer {
+            font-weight: 500;
+            color: var(--charcoal);
+        }
+
+        .order-date {
+            white-space: nowrap;
+        }
+
+        .order-total {
+            font-weight: 600;
+            color: var(--charcoal);
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .order-status.pending-payment {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-status.payment-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .order-status.processing {
+            background: #cce7ff;
+            color: #004085;
+        }
+
+        .order-status.shipped {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .order-status.delivered {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .order-status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-status.refunded {
+            background: #ffeaa7;
+            color: #6c5ce7;
+        }
+
+        .order-status.failed {
+            background: #f5c6cb;
+            color: #721c24;
+        }
+
+        .payment-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .payment-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .payment-status.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .payment-status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-status.refunded {
+            background: #ffeaa7;
+            color: #6c5ce7;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            background: var(--charcoal);
+            color: var(--warm-white);
+            border: none;
+            padding: 0.5rem 1rem;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--smooth);
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            background: var(--warm-sand);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.secondary {
+            background: var(--soft-beige);
+            color: var(--charcoal);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--muted-gold);
+        }
+
+        .orders-loading,
+        .orders-error {
+            color: var(--deep-taupe);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .orders-loading.show,
+        .orders-error.show {
+            display: block;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            background: var(--warm-white);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--soft-beige);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-info {
+            color: var(--deep-taupe);
+            font-size: 0.9rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            background: transparent;
+            border: 2px solid var(--soft-beige);
+            color: var(--deep-taupe);
+            padding: 0.5rem 1rem;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--smooth);
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--soft-beige);
+            border-color: var(--deep-taupe);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-numbers {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .page-number {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid var(--soft-beige);
+            color: var(--deep-taupe);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--smooth);
+        }
+
+        .page-number:hover {
+            background: var(--soft-beige);
+            border-color: var(--deep-taupe);
+        }
+
+        .page-number.active {
+            background: var(--deep-taupe);
+            color: var(--warm-white);
+            border-color: var(--deep-taupe);
         }
 
         /* Product Modal Styles */
@@ -1365,6 +1727,118 @@
                 font-size: 0.6rem;
             }
         }
+
+        /* Dialog Styles */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .dialog {
+            background: var(--warm-white);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--soft-beige);
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--soft-beige);
+        }
+
+        .dialog-header h3 {
+            margin: 0;
+            color: var(--charcoal);
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+        }
+
+        .dialog-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--deep-taupe);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: var(--smooth);
+        }
+
+        .dialog-close:hover {
+            background: var(--soft-beige);
+            color: var(--charcoal);
+        }
+
+        .dialog-form {
+            padding: 2rem;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--soft-beige);
+            background: var(--warm-white);
+        }
+
+        .dialog-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .dialog-btn.secondary {
+            background: transparent;
+            border-color: var(--soft-beige);
+            color: var(--deep-taupe);
+        }
+
+        .dialog-btn.secondary:hover {
+            background: var(--soft-beige);
+            color: var(--charcoal);
+        }
+
+        .dialog-btn.primary {
+            background: var(--charcoal);
+            border-color: var(--charcoal);
+            color: var(--warm-white);
+        }
+
+        .dialog-btn.primary:hover {
+            background: var(--deep-taupe);
+            border-color: var(--deep-taupe);
+        }
+
+        .dialog-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -1466,17 +1940,17 @@
         </div>
 
         <!-- Products Section (Only visible when authenticated) -->
-        <div class="products-section" id="productsSection" style="display: none;">
-                     <div class="products-header">
-                         <div>
-                <h2>Product Management</h2>
-                <p>Manage your product catalog</p>
+        <div class="admin-section" id="productsSection" style="display: none;">
+            <div class="admin-header">
+                <div>
+                    <h2>Product Management</h2>
+                    <p>Manage your product catalog</p>
+                </div>
+                <div class="header-buttons">
+                    <button class="gallery-btn secondary" id="viewStoreBtn">View Store</button>
+                    <button class="gallery-btn" id="addProductBtn">Add New Product</button>
+                </div>
             </div>
-            <div class="header-buttons">
-                <button class="gallery-btn secondary" id="viewStoreBtn">View Store</button>
-                <button class="gallery-btn" id="addProductBtn">Add New Product</button>
-            </div>
-         </div>
             
             <div class="products-container" id="productsContainer">
                 <!-- Products will be loaded here -->
@@ -1489,6 +1963,217 @@
             <div class="products-error" id="productsError" style="display: none;">
                 Failed to load products. Please try again.
             </div>
+        </div>
+
+        <!-- Orders Section (Only visible when authenticated) -->
+        <div class="admin-section" id="ordersSection" style="display: none;">
+            <div class="admin-header">
+                <div>
+                    <h2>Order Management</h2>
+                    <p>View and manage customer orders</p>
+                </div>
+                <div class="header-buttons">
+                    <div class="search-container-wide">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="orderSearch" placeholder="Search by email, status, or order number..." class="search-input-wide">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="orders-container" id="ordersContainer">
+                <div class="orders-table-container">
+                    <table class="orders-table" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>Order Number</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <!-- Orders will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination-container" id="paginationContainer" style="display: none;">
+                <div class="pagination-info">
+                    <span id="paginationInfo">Showing 1-10 of 0 orders</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="prevPageBtn" disabled>← Previous</button>
+                    <div class="pagination-numbers" id="paginationNumbers">
+                        <!-- Page numbers will be inserted here -->
+                    </div>
+                    <button class="pagination-btn" id="nextPageBtn" disabled>Next →</button>
+                </div>
+            </div>
+            
+            <div class="orders-loading" id="ordersLoading" style="display: none;">
+                Loading orders...
+            </div>
+            
+            <div class="orders-error" id="ordersError" style="display: none;">
+                Failed to load orders. Please try again.
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Edit Dialog -->
+    <div class="dialog-overlay" id="orderDialogOverlay" style="display: none;">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3 id="orderDialogTitle">Edit Order</h3>
+                <button class="dialog-close" id="orderDialogClose">&times;</button>
+            </div>
+            
+            <form class="dialog-form" id="orderForm">
+                <div class="form-section">
+                    <h4>Order Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="orderIdInput">Order Number</label>
+                            <input type="text" id="orderIdInput" readonly disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="orderDateInput">Order Date</label>
+                            <input type="datetime-local" id="orderDateInput">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="orderStatusSelect">Order Status</label>
+                            <select id="orderStatusSelect" required>
+                                <!-- Populated from constants -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentStatusSelect">Payment Status</label>
+                            <select id="paymentStatusSelect" required>
+                                <!-- Populated from constants -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Customer Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customerEmailInput">Email</label>
+                            <input type="email" id="customerEmailInput" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerPhoneInput">Phone</label>
+                            <input type="tel" id="customerPhoneInput">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Billing Address</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="billingFirstNameInput">First Name</label>
+                            <input type="text" id="billingFirstNameInput" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingLastNameInput">Last Name</label>
+                            <input type="text" id="billingLastNameInput" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="billingAddressInput">Address</label>
+                        <input type="text" id="billingAddressInput" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="billingCityInput">City</label>
+                            <input type="text" id="billingCityInput" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingPostcodeInput">Postcode</label>
+                            <input type="text" id="billingPostcodeInput" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="billingCountryInput">Country</label>
+                        <input type="text" id="billingCountryInput" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Shipping Address</h4>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="sameAsBillingCheckbox">
+                            Same as billing address
+                        </label>
+                    </div>
+                    <div id="shippingAddressFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="shippingFirstNameInput">First Name</label>
+                                <input type="text" id="shippingFirstNameInput">
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingLastNameInput">Last Name</label>
+                                <input type="text" id="shippingLastNameInput">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingAddressInput">Address</label>
+                            <input type="text" id="shippingAddressInput">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="shippingCityInput">City</label>
+                                <input type="text" id="shippingCityInput">
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingPostcodeInput">Postcode</label>
+                                <input type="text" id="shippingPostcodeInput">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingCountryInput">Country</label>
+                            <input type="text" id="shippingCountryInput">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Order Total</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="orderTotalInput">Total (€)</label>
+                            <input type="number" id="orderTotalInput" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="orderTaxInput">Tax (€)</label>
+                            <input type="number" id="orderTaxInput" step="0.01" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Order Items</h4>
+                    <div id="orderItemsList">
+                        <!-- Order items will be displayed here -->
+                    </div>
+                </div>
+                
+                <div class="dialog-buttons">
+                    <button type="button" class="dialog-btn secondary" id="orderDialogCancel">Cancel</button>
+                    <button type="submit" class="dialog-btn primary" id="orderDialogSave">Save Order</button>
+                </div>
+            </form>
         </div>
     </div>
 

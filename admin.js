@@ -168,6 +168,7 @@ class AdminPanel {
         const roleBadge = document.getElementById('roleBadge');
         const accessDeniedElement = document.getElementById('accessDenied');
         const productsSection = document.getElementById('productsSection');
+        const ordersSection = document.getElementById('ordersSection');
 
         // Update role badge with user's role from Firebase
         if (roleBadge && adminData.role) {
@@ -179,14 +180,25 @@ class AdminPanel {
             accessDeniedElement.classList.remove('show');
         }
 
-        // Show products section
+        // Show both products and orders sections
         if (productsSection) {
             productsSection.style.display = 'block';
+            productsSection.classList.add('active');
+        }
+
+        if (ordersSection) {
+            ordersSection.style.display = 'block';
+            ordersSection.classList.add('active');
         }
 
         console.log('🎉 Administrator access granted');
         
-        // Load products after admin access is confirmed
+        // Initialize OrderManager after admin access is confirmed
+        if (!window.orderManager) {
+            window.orderManager = new OrderManager();
+        }
+        
+        // Load products and orders after admin access is confirmed
         this.loadAdminContent();
     }
 
@@ -194,6 +206,11 @@ class AdminPanel {
         console.log('📦 Loading admin content...');
         await this.fetchProducts();
         this.setupProductActions();
+        
+        // Load orders if OrderManager is available
+        if (window.orderManager) {
+            await window.orderManager.loadOrders();
+        }
     }
 
     setupProductActions() {
@@ -1208,6 +1225,542 @@ class AdminPanel {
         requestAnimationFrame(() => {
             modal.classList.add('show');
         });
+    }
+}
+
+// Order Management Class
+class OrderManager {
+    constructor() {
+        this.db = window.firebaseServices?.db;
+        this.orders = [];
+        this.filteredOrders = [];
+        this.currentEditOrder = null;
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.totalPages = 0;
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('orderSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterOrders(e.target.value);
+            });
+        }
+
+        // Order edit dialog
+        const orderDialogClose = document.getElementById('orderDialogClose');
+        const orderDialogCancel = document.getElementById('orderDialogCancel');
+        const orderForm = document.getElementById('orderForm');
+        const sameAsBillingCheckbox = document.getElementById('sameAsBillingCheckbox');
+
+        if (orderDialogClose) {
+            orderDialogClose.addEventListener('click', () => this.closeOrderDialog());
+        }
+
+        if (orderDialogCancel) {
+            orderDialogCancel.addEventListener('click', () => this.closeOrderDialog());
+        }
+
+        if (orderForm) {
+            orderForm.addEventListener('submit', (e) => this.handleOrderSave(e));
+        }
+
+        if (sameAsBillingCheckbox) {
+            sameAsBillingCheckbox.addEventListener('change', (e) => {
+                this.toggleShippingFields(e.target.checked);
+            });
+        }
+
+        // Close dialog on overlay click
+        const orderDialogOverlay = document.getElementById('orderDialogOverlay');
+        if (orderDialogOverlay) {
+            orderDialogOverlay.addEventListener('click', (e) => {
+                if (e.target === orderDialogOverlay) {
+                    this.closeOrderDialog();
+                }
+            });
+        }
+
+        // Pagination event listeners
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        
+        if (prevPageBtn) {
+            prevPageBtn.addEventListener('click', () => this.goToPage(this.currentPage - 1));
+        }
+        
+        if (nextPageBtn) {
+            nextPageBtn.addEventListener('click', () => this.goToPage(this.currentPage + 1));
+        }
+    }
+
+    async loadOrders() {
+        const loading = document.getElementById('ordersLoading');
+        const error = document.getElementById('ordersError');
+        const container = document.getElementById('ordersContainer');
+
+        try {
+            this.showOrdersLoading(true);
+            this.hideOrdersError();
+
+            if (!this.db) {
+                throw new Error('Database not available');
+            }
+
+            const ordersCollection = this.db.collection('orders');
+            const snapshot = await ordersCollection.orderBy('createdAt', 'desc').get();
+
+            this.orders = [];
+            snapshot.forEach(doc => {
+                this.orders.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            this.filteredOrders = [...this.orders];
+            this.currentPage = 1; // Reset to first page
+            this.renderOrders();
+
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            this.showOrdersError('Failed to load orders. Please try again.');
+        } finally {
+            this.showOrdersLoading(false);
+        }
+    }
+
+    filterOrders(searchTerm) {
+        if (!searchTerm.trim()) {
+            this.filteredOrders = [...this.orders];
+        } else {
+            const term = searchTerm.toLowerCase();
+            this.filteredOrders = this.orders.filter(order => {
+                return (
+                    order.id.toLowerCase().includes(term) ||
+                    order.customerEmail?.toLowerCase().includes(term) ||
+                    order.status?.toLowerCase().includes(term) ||
+                    order.paymentStatus?.toLowerCase().includes(term) ||
+                    order.stripeSessionId?.toLowerCase().includes(term)
+                );
+            });
+        }
+        // Reset to first page when filtering
+        this.currentPage = 1;
+        this.renderOrders();
+    }
+
+    renderOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        if (!tbody) return;
+
+        if (this.filteredOrders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--deep-taupe);">
+                        ${this.orders.length === 0 ? 'No orders found.' : 'No orders match your search.'}
+                    </td>
+                </tr>
+            `;
+            this.hidePagination();
+            return;
+        }
+
+        // Calculate pagination
+        this.totalPages = Math.ceil(this.filteredOrders.length / this.itemsPerPage);
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const pageOrders = this.filteredOrders.slice(startIndex, endIndex);
+
+        tbody.innerHTML = pageOrders.map(order => {
+            const orderDate = order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'N/A';
+            const total = order.total ? `€${(order.total / 100).toFixed(2)}` : 'N/A';
+            
+            return `
+                <tr>
+                    <td>
+                        <span class="order-id">${order.orderNumber || order.id}</span>
+                    </td>
+                    <td>
+                        <div class="order-customer">${order.customerEmail || 'N/A'}</div>
+                    </td>
+                    <td class="order-date">${orderDate}</td>
+                    <td class="order-total">${total}</td>
+                    <td>
+                        <span class="order-status ${(order.status || '').replace('_', '-')}">${this.getStatusLabel(order.status)}</span>
+                    </td>
+                    <td>
+                        <span class="payment-status ${order.paymentStatus || ''}">${this.getPaymentStatusLabel(order.paymentStatus)}</span>
+                    </td>
+                    <td>
+                        <div class="order-actions">
+                            <button class="action-btn" onclick="window.orderManager.editOrder('${order.id}')">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        this.updatePagination();
+    }
+
+    getStatusLabel(status) {
+        const statusObj = PRODUCT_CONSTANTS.orderStatuses.find(s => s.value === status);
+        return statusObj ? statusObj.label : status || 'Unknown';
+    }
+
+    getPaymentStatusLabel(status) {
+        const statusObj = PRODUCT_CONSTANTS.paymentStatuses.find(s => s.value === status);
+        return statusObj ? statusObj.label : status || 'Unknown';
+    }
+
+    editOrder(orderId) {
+        const order = this.orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        this.currentEditOrder = order;
+        this.populateOrderForm(order);
+        this.showOrderDialog();
+    }
+
+    populateOrderForm(order) {
+        // Populate status dropdowns
+        this.populateStatusDropdowns();
+
+        // Order information
+        document.getElementById('orderIdInput').value = order.orderNumber || order.id;
+        
+        // Format date for datetime-local input
+        if (order.createdAt) {
+            const date = new Date(order.createdAt.toDate());
+            const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+                .toISOString().slice(0, 16);
+            document.getElementById('orderDateInput').value = localDateTime;
+        }
+
+        document.getElementById('orderStatusSelect').value = order.status || '';
+        document.getElementById('paymentStatusSelect').value = order.paymentStatus || '';
+
+        // Customer information
+        document.getElementById('customerEmailInput').value = order.customerEmail || '';
+        document.getElementById('customerPhoneInput').value = order.billingAddress?.phone || '';
+
+        // Billing address
+        const billing = order.billingAddress || {};
+        document.getElementById('billingFirstNameInput').value = billing.firstName || '';
+        document.getElementById('billingLastNameInput').value = billing.lastName || '';
+        document.getElementById('billingAddressInput').value = billing.address || '';
+        document.getElementById('billingCityInput').value = billing.city || '';
+        document.getElementById('billingPostcodeInput').value = billing.postcode || '';
+        document.getElementById('billingCountryInput').value = billing.country || '';
+
+        // Shipping address
+        const shipping = order.shippingAddress || {};
+        const sameAsBilling = this.isSameAddress(billing, shipping);
+        document.getElementById('sameAsBillingCheckbox').checked = sameAsBilling;
+        this.toggleShippingFields(sameAsBilling);
+
+        if (!sameAsBilling) {
+            document.getElementById('shippingFirstNameInput').value = shipping.firstName || '';
+            document.getElementById('shippingLastNameInput').value = shipping.lastName || '';
+            document.getElementById('shippingAddressInput').value = shipping.address || '';
+            document.getElementById('shippingCityInput').value = shipping.city || '';
+            document.getElementById('shippingPostcodeInput').value = shipping.postcode || '';
+            document.getElementById('shippingCountryInput').value = shipping.country || '';
+        }
+
+        // Order totals
+        document.getElementById('orderTotalInput').value = order.total ? (order.total / 100).toFixed(2) : '';
+        document.getElementById('orderTaxInput').value = order.tax ? (order.tax / 100).toFixed(2) : '0';
+
+        // Order items
+        this.renderOrderItems(order.items || []);
+    }
+
+    populateStatusDropdowns() {
+        const orderStatusSelect = document.getElementById('orderStatusSelect');
+        const paymentStatusSelect = document.getElementById('paymentStatusSelect');
+
+        // Populate order status
+        orderStatusSelect.innerHTML = PRODUCT_CONSTANTS.orderStatuses.map(status => 
+            `<option value="${status.value}">${status.label}</option>`
+        ).join('');
+
+        // Populate payment status
+        paymentStatusSelect.innerHTML = PRODUCT_CONSTANTS.paymentStatuses.map(status => 
+            `<option value="${status.value}">${status.label}</option>`
+        ).join('');
+    }
+
+    isSameAddress(billing, shipping) {
+        return (
+            billing.firstName === shipping.firstName &&
+            billing.lastName === shipping.lastName &&
+            billing.address === shipping.address &&
+            billing.city === shipping.city &&
+            billing.postcode === shipping.postcode &&
+            billing.country === shipping.country
+        );
+    }
+
+    toggleShippingFields(hide) {
+        const shippingFields = document.getElementById('shippingAddressFields');
+        if (shippingFields) {
+            shippingFields.style.display = hide ? 'none' : 'block';
+        }
+    }
+
+    renderOrderItems(items) {
+        const container = document.getElementById('orderItemsList');
+        if (!container) return;
+
+        if (items.length === 0) {
+            container.innerHTML = '<p style="color: var(--deep-taupe); font-style: italic;">No items in this order.</p>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--soft-beige); border-radius: 8px; margin-bottom: 0.5rem;">
+                <div>
+                    <strong>${item.name || 'Unknown Product'}</strong>
+                    ${item.selectedSize ? `<br><small>Size: ${item.selectedSize}</small>` : ''}
+                    ${item.selectedColor ? `<br><small>Color: ${item.selectedColor}</small>` : ''}
+                </div>
+                <div style="text-align: right;">
+                    <div>Qty: ${item.quantity || 1}</div>
+                    <div><strong>€${item.price ? (item.price / 100).toFixed(2) : '0.00'}</strong></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async handleOrderSave(e) {
+        e.preventDefault();
+
+        if (!this.currentEditOrder) return;
+
+        try {
+            const formData = new FormData(e.target);
+            const updatedOrder = this.buildOrderFromForm();
+
+            await this.db.collection('orders').doc(this.currentEditOrder.id).update(updatedOrder);
+
+            this.closeOrderDialog();
+            this.loadOrders(); // Reload orders
+            this.showSuccess('Order updated successfully!');
+
+        } catch (error) {
+            console.error('Error updating order:', error);
+            this.showError('Failed to update order. Please try again.');
+        }
+    }
+
+    buildOrderFromForm() {
+        return {
+            status: document.getElementById('orderStatusSelect').value,
+            paymentStatus: document.getElementById('paymentStatusSelect').value,
+            customerEmail: document.getElementById('customerEmailInput').value,
+            billingAddress: {
+                firstName: document.getElementById('billingFirstNameInput').value,
+                lastName: document.getElementById('billingLastNameInput').value,
+                address: document.getElementById('billingAddressInput').value,
+                city: document.getElementById('billingCityInput').value,
+                postcode: document.getElementById('billingPostcodeInput').value,
+                country: document.getElementById('billingCountryInput').value,
+                phone: document.getElementById('customerPhoneInput').value
+            },
+            shippingAddress: document.getElementById('sameAsBillingCheckbox').checked ? 
+                {
+                    firstName: document.getElementById('billingFirstNameInput').value,
+                    lastName: document.getElementById('billingLastNameInput').value,
+                    address: document.getElementById('billingAddressInput').value,
+                    city: document.getElementById('billingCityInput').value,
+                    postcode: document.getElementById('billingPostcodeInput').value,
+                    country: document.getElementById('billingCountryInput').value
+                } : {
+                    firstName: document.getElementById('shippingFirstNameInput').value,
+                    lastName: document.getElementById('shippingLastNameInput').value,
+                    address: document.getElementById('shippingAddressInput').value,
+                    city: document.getElementById('shippingCityInput').value,
+                    postcode: document.getElementById('shippingPostcodeInput').value,
+                    country: document.getElementById('shippingCountryInput').value
+                },
+            total: Math.round(parseFloat(document.getElementById('orderTotalInput').value) * 100),
+            tax: Math.round(parseFloat(document.getElementById('orderTaxInput').value) * 100),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+    }
+
+    showOrderDialog() {
+        const overlay = document.getElementById('orderDialogOverlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeOrderDialog() {
+        const overlay = document.getElementById('orderDialogOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        this.currentEditOrder = null;
+    }
+
+    showOrdersLoading(show) {
+        const loading = document.getElementById('ordersLoading');
+        if (loading) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    hideOrdersError() {
+        const error = document.getElementById('ordersError');
+        if (error) {
+            error.style.display = 'none';
+        }
+    }
+
+    showOrdersError(message) {
+        const error = document.getElementById('ordersError');
+        if (error) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+    }
+
+    showSuccess(message) {
+        // Create a simple success notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            z-index: 10000;
+            font-family: var(--font-sans);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    showError(message) {
+        // Create a simple error notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            z-index: 10000;
+            font-family: var(--font-sans);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+    // Pagination methods
+    updatePagination() {
+        const paginationContainer = document.getElementById('paginationContainer');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const paginationNumbers = document.getElementById('paginationNumbers');
+
+        if (!paginationContainer) return;
+
+        // Show pagination
+        paginationContainer.style.display = 'flex';
+
+        // Update info
+        const startItem = (this.currentPage - 1) * this.itemsPerPage + 1;
+        const endItem = Math.min(this.currentPage * this.itemsPerPage, this.filteredOrders.length);
+        if (paginationInfo) {
+            paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${this.filteredOrders.length} orders`;
+        }
+
+        // Update buttons
+        if (prevPageBtn) {
+            prevPageBtn.disabled = this.currentPage <= 1;
+        }
+        if (nextPageBtn) {
+            nextPageBtn.disabled = this.currentPage >= this.totalPages;
+        }
+
+        // Update page numbers
+        if (paginationNumbers) {
+            this.renderPageNumbers();
+        }
+    }
+
+    hidePagination() {
+        const paginationContainer = document.getElementById('paginationContainer');
+        if (paginationContainer) {
+            paginationContainer.style.display = 'none';
+        }
+    }
+
+    renderPageNumbers() {
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        if (!paginationNumbers) return;
+
+        let pages = [];
+        const maxVisible = 5;
+
+        if (this.totalPages <= maxVisible) {
+            // Show all pages
+            for (let i = 1; i <= this.totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Show smart pagination
+            let start = Math.max(1, this.currentPage - 2);
+            let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+            if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+        }
+
+        paginationNumbers.innerHTML = pages.map(page => 
+            `<button class="page-number ${page === this.currentPage ? 'active' : ''}" 
+                     onclick="window.orderManager.goToPage(${page})">${page}</button>`
+        ).join('');
+    }
+
+    goToPage(page) {
+        if (page < 1 || page > this.totalPages || page === this.currentPage) {
+            return;
+        }
+        
+        this.currentPage = page;
+        this.renderOrders();
     }
 }
 
