@@ -541,25 +541,17 @@ class ShoppingCart {
     }
 }
 
-// Initialize cart when DOM is ready AND when scripts are loaded
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initCart);
-    } else {
-        initCart();
-    }
-});
-
-// Also initialize when all scripts are loaded (fallback)
-document.addEventListener('allScriptsLoaded', () => {
-    if (!window.shoppingCart) {
-        initCart();
-    }
-});
-
+// Initialize after header is injected so elements exist
 function initCart() {
+    if (!document.getElementById('cartIcon')) return; // wait until header exists
     if (!window.shoppingCart) {
         window.shoppingCart = new ShoppingCart();
         console.log('🛒 Shopping cart initialized');
     }
-} 
+}
+
+document.addEventListener('headerLoaded', initCart);
+
+document.addEventListener('allScriptsLoaded', initCart);
+
+document.addEventListener('DOMContentLoaded', initCart); 

@@ -3,25 +3,29 @@ const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
 const body = document.body;
 
-hamburger.addEventListener('click', () => {
-    mobileMenu.classList.toggle('open');
-    hamburger.classList.toggle('active');
-    body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : 'auto';
-});
+if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', () => {
+        mobileMenu.classList.toggle('open');
+        hamburger.classList.toggle('active');
+        body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : 'auto';
+    });
+}
 
 // Close mobile menu when clicking on a link
 const mobileLinks = document.querySelectorAll('.mobile-link');
 mobileLinks.forEach(link => {
     link.addEventListener('click', () => {
-        mobileMenu.classList.remove('open');
-        hamburger.classList.remove('active');
-        body.style.overflow = 'auto';
+        if (mobileMenu && hamburger) {
+            mobileMenu.classList.remove('open');
+            hamburger.classList.remove('active');
+            body.style.overflow = 'auto';
+        }
     });
 });
 
 // Close mobile menu when clicking outside
 document.addEventListener('click', (e) => {
-    if (!mobileMenu.contains(e.target) && !hamburger.contains(e.target) && mobileMenu.classList.contains('open')) {
+    if (mobileMenu && hamburger && !mobileMenu.contains(e.target) && !hamburger.contains(e.target) && mobileMenu.classList.contains('open')) {
         mobileMenu.classList.remove('open');
         hamburger.classList.remove('active');
         body.style.overflow = 'auto';
@@ -33,6 +37,9 @@ const navbar = document.querySelector('.navbar');
 let lastScrollY = window.scrollY;
 
 window.addEventListener('scroll', () => {
+    const navbarEl = document.querySelector('.navbar');
+    if (!navbarEl) return;
+
     const currentScrollY = window.scrollY;
     const maxScroll = 200; // Distance to scroll for full background opacity
     
@@ -40,13 +47,13 @@ window.addEventListener('scroll', () => {
     let bgOpacity = Math.min(currentScrollY / maxScroll, 1);
     
     // Set navbar background opacity using CSS custom property
-    navbar.style.setProperty('--navbar-bg-opacity', bgOpacity);
+    navbarEl.style.setProperty('--navbar-bg-opacity', bgOpacity);
     
     // Add/remove scrolled class for text color changes
     if (currentScrollY > 50) {
-        navbar.classList.add('scrolled');
+        navbarEl.classList.add('scrolled');
     } else {
-        navbar.classList.remove('scrolled');
+        navbarEl.classList.remove('scrolled');
     }
     
     lastScrollY = currentScrollY;
@@ -252,6 +259,7 @@ async function loadComponent(componentPath, placeholderSelector) {
         const placeholder = document.querySelector(placeholderSelector);
         if (placeholder) {
             placeholder.outerHTML = html;
+            document.dispatchEvent(new CustomEvent('headerLoaded'));
             console.log(`✅ Component loaded: ${componentPath}`);
         } else {
             console.warn(`⚠️ Placeholder not found: ${placeholderSelector}`);
@@ -261,40 +269,75 @@ async function loadComponent(componentPath, placeholderSelector) {
     }
 }
 
-// Initialize animations when DOM is loaded and all scripts are ready
+// Initialize components and animations when scripts are ready
 document.addEventListener('allScriptsLoaded', async () => {
+    // Load header first (needed for nav/cart bindings)
+    await loadComponent('header.html', 'header-placeholder');
+
+    // After header is injected, (re)bind header-dependent behavior safely
+    // Mobile menu toggle and navbar opacity code relies on these elements
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const navbar = document.querySelector('.navbar');
+
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', () => {
+            mobileMenu.classList.toggle('open');
+            hamburger.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : 'auto';
+        });
+
+        document.querySelectorAll('.mobile-link').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+                hamburger.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && !hamburger.contains(e.target) && mobileMenu.classList.contains('open')) {
+                mobileMenu.classList.remove('open');
+                hamburger.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+    }
+
+    // Initialize navbar background state
+    const navEl = document.querySelector('.navbar');
+    if (navEl) {
+        const currentScrollY = window.scrollY;
+        const maxScroll = 200;
+        let bgOpacity = Math.min(currentScrollY / maxScroll, 1);
+        navEl.style.setProperty('--navbar-bg-opacity', bgOpacity);
+        if (currentScrollY > 50) {
+            navEl.classList.add('scrolled');
+        }
+    }
+
     // Load footer component
     await loadComponent('footer.html', 'footer-placeholder');
-    
-    // Set the current year in the footer
+
+    // Footer year
     const currentYearElement = document.getElementById('currentYear');
     if (currentYearElement) {
         currentYearElement.textContent = new Date().getFullYear();
     }
-    
-    // Set initial navbar background state
-    const navbar = document.querySelector('.navbar');
-    const currentScrollY = window.scrollY;
-    const maxScroll = 200;
-    let bgOpacity = Math.min(currentScrollY / maxScroll, 1);
-    navbar.style.setProperty('--navbar-bg-opacity', bgOpacity);
-    
-    if (currentScrollY > 50) {
-        navbar.classList.add('scrolled');
-    }
-    
-    // Add initial animation to hero content
+
+    // Initial hero animation
     const heroContent = document.querySelector('.hero-content');
-    heroContent.style.opacity = '0';
-    heroContent.style.transform = 'translateY(30px)';
-    
-    setTimeout(() => {
-        heroContent.style.opacity = '1';
-        heroContent.style.transform = 'translateY(0)';
-        heroContent.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
-    }, 300);
-    
-    console.log('🎨 All animations and components initialized');
+    if (heroContent) {
+        heroContent.style.opacity = '0';
+        heroContent.style.transform = 'translateY(30px)';
+        setTimeout(() => {
+            heroContent.style.opacity = '1';
+            heroContent.style.transform = 'translateY(0)';
+            heroContent.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+        }, 300);
+    }
+
+    console.log('🎨 Header and footer loaded; components initialized');
 });
 
 // Mouse cursor enhancement for interactive elements
