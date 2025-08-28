@@ -1443,30 +1443,37 @@ class OrderManager {
 
         document.getElementById('orderStatusSelect').value = order.status || '';
         document.getElementById('paymentStatusSelect').value = order.paymentStatus || '';
+        document.getElementById('trackingLinkInput').value = order.trackingLink || '';
 
         // Customer information
         document.getElementById('customerEmailInput').value = order.customerEmail || '';
-        document.getElementById('customerPhoneInput').value = order.billingAddress?.phone || '';
+        document.getElementById('customerPhoneInput').value = order.billing?.phone || '';
 
         // Billing address
-        const billing = order.billingAddress || {};
+        const billing = order.billing || {};
+        document.getElementById('billingEmailInput').value = billing.email || '';
         document.getElementById('billingFirstNameInput').value = billing.firstName || '';
         document.getElementById('billingLastNameInput').value = billing.lastName || '';
+        document.getElementById('billingPhoneInput').value = billing.phone || '';
         document.getElementById('billingAddressInput').value = billing.address || '';
+        document.getElementById('billingAddressDetailsInput').value = billing.addressDetails || '';
         document.getElementById('billingCityInput').value = billing.city || '';
         document.getElementById('billingPostcodeInput').value = billing.postcode || '';
         document.getElementById('billingCountryInput').value = billing.country || '';
 
         // Shipping address
-        const shipping = order.shippingAddress || {};
+        const shipping = order.shipping || {};
         const sameAsBilling = this.isSameAddress(billing, shipping);
         document.getElementById('sameAsBillingCheckbox').checked = sameAsBilling;
         this.toggleShippingFields(sameAsBilling);
 
         if (!sameAsBilling) {
+            document.getElementById('shippingEmailInput').value = shipping.email || '';
             document.getElementById('shippingFirstNameInput').value = shipping.firstName || '';
             document.getElementById('shippingLastNameInput').value = shipping.lastName || '';
+            document.getElementById('shippingPhoneInput').value = shipping.phone || '';
             document.getElementById('shippingAddressInput').value = shipping.address || '';
+            document.getElementById('shippingAddressDetailsInput').value = shipping.addressDetails || '';
             document.getElementById('shippingCityInput').value = shipping.city || '';
             document.getElementById('shippingPostcodeInput').value = shipping.postcode || '';
             document.getElementById('shippingCountryInput').value = shipping.country || '';
@@ -1497,9 +1504,12 @@ class OrderManager {
 
     isSameAddress(billing, shipping) {
         return (
+            billing.email === shipping.email &&
             billing.firstName === shipping.firstName &&
             billing.lastName === shipping.lastName &&
+            billing.phone === shipping.phone &&
             billing.address === shipping.address &&
+            billing.addressDetails === shipping.addressDetails &&
             billing.city === shipping.city &&
             billing.postcode === shipping.postcode &&
             billing.country === shipping.country
@@ -1517,21 +1527,31 @@ class OrderManager {
         const container = document.getElementById('orderItemsList');
         if (!container) return;
 
-        if (items.length === 0) {
+        if (!items || items.length === 0) {
             container.innerHTML = '<p style="color: var(--deep-taupe); font-style: italic;">No items in this order.</p>';
             return;
         }
 
         container.innerHTML = items.map(item => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--soft-beige); border-radius: 8px; margin-bottom: 0.5rem;">
-                <div>
-                    <strong>${item.name || 'Unknown Product'}</strong>
-                    ${item.selectedSize ? `<br><small>Size: ${item.selectedSize}</small>` : ''}
-                    ${item.selectedColor ? `<br><small>Color: ${item.selectedColor}</small>` : ''}
-                </div>
-                <div style="text-align: right;">
-                    <div>Qty: ${item.quantity || 1}</div>
-                    <div><strong>€${item.price ? (item.price / 100).toFixed(2) : '0.00'}</strong></div>
+            <div style="border: 1px solid var(--soft-beige); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: var(--warm-white);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <strong style="font-size: 1.1rem;">${item.productName || 'Unknown Product'}</strong>
+                        </div>
+                        <div style="color: var(--deep-taupe); font-size: 0.9rem;">
+                            <div><strong>Size:</strong> ${item.size || 'N/A'}</div>
+                            <div><strong>Color:</strong> ${item.color || 'N/A'}</div>
+                            <div><strong>Quantity:</strong> ${item.quantity || 1}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: var(--deep-taupe); font-size: 0.9rem;">
+                            <div><strong>Price:</strong> €${item.unitPrice ? (item.unitPrice / 100).toFixed(2) : '0.00'}</div>
+                            <div><strong>Variant ID:</strong> ${item.variantId || 'N/A'}</div>
+                            <div><strong>SKU:</strong> ${item.variantSku || 'N/A'}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -1562,28 +1582,37 @@ class OrderManager {
         return {
             status: document.getElementById('orderStatusSelect').value,
             paymentStatus: document.getElementById('paymentStatusSelect').value,
+            trackingLink: document.getElementById('trackingLinkInput').value,
             customerEmail: document.getElementById('customerEmailInput').value,
-            billingAddress: {
+            billing: {
+                email: document.getElementById('billingEmailInput').value,
                 firstName: document.getElementById('billingFirstNameInput').value,
                 lastName: document.getElementById('billingLastNameInput').value,
+                phone: document.getElementById('billingPhoneInput').value,
                 address: document.getElementById('billingAddressInput').value,
+                addressDetails: document.getElementById('billingAddressDetailsInput').value,
                 city: document.getElementById('billingCityInput').value,
                 postcode: document.getElementById('billingPostcodeInput').value,
-                country: document.getElementById('billingCountryInput').value,
-                phone: document.getElementById('customerPhoneInput').value
+                country: document.getElementById('billingCountryInput').value
             },
-            shippingAddress: document.getElementById('sameAsBillingCheckbox').checked ? 
+            shipping: document.getElementById('sameAsBillingCheckbox').checked ? 
                 {
+                    email: document.getElementById('billingEmailInput').value,
                     firstName: document.getElementById('billingFirstNameInput').value,
                     lastName: document.getElementById('billingLastNameInput').value,
+                    phone: document.getElementById('billingPhoneInput').value,
                     address: document.getElementById('billingAddressInput').value,
+                    addressDetails: document.getElementById('billingAddressDetailsInput').value,
                     city: document.getElementById('billingCityInput').value,
                     postcode: document.getElementById('billingPostcodeInput').value,
                     country: document.getElementById('billingCountryInput').value
                 } : {
+                    email: document.getElementById('shippingEmailInput').value,
                     firstName: document.getElementById('shippingFirstNameInput').value,
                     lastName: document.getElementById('shippingLastNameInput').value,
+                    phone: document.getElementById('shippingPhoneInput').value,
                     address: document.getElementById('shippingAddressInput').value,
+                    addressDetails: document.getElementById('shippingAddressDetailsInput').value,
                     city: document.getElementById('shippingCityInput').value,
                     postcode: document.getElementById('shippingPostcodeInput').value,
                     country: document.getElementById('shippingCountryInput').value

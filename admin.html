@@ -2060,6 +2060,10 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="trackingLinkInput">Tracking Link</label>
+                        <input type="url" id="trackingLinkInput" placeholder="https://...">
+                    </div>
                 </div>
 
                 <div class="form-section">
@@ -2078,6 +2082,10 @@
 
                 <div class="form-section">
                     <h4>Billing Address</h4>
+                    <div class="form-group">
+                        <label for="billingEmailInput">Email</label>
+                        <input type="email" id="billingEmailInput" required>
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="billingFirstNameInput">First Name</label>
@@ -2089,8 +2097,16 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label for="billingPhoneInput">Phone</label>
+                        <input type="tel" id="billingPhoneInput" required>
+                    </div>
+                    <div class="form-group">
                         <label for="billingAddressInput">Address</label>
                         <input type="text" id="billingAddressInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="billingAddressDetailsInput">Address Details</label>
+                        <input type="text" id="billingAddressDetailsInput" placeholder="Apartment, suite, etc. (optional)">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -2104,7 +2120,10 @@
                     </div>
                     <div class="form-group">
                         <label for="billingCountryInput">Country</label>
-                        <input type="text" id="billingCountryInput" required>
+                        <select id="billingCountryInput" required>
+                            <option value="">Select Country</option>
+                            <option value="HR">Croatia</option>
+                        </select>
                     </div>
                 </div>
 
@@ -2117,6 +2136,10 @@
                         </label>
                     </div>
                     <div id="shippingAddressFields">
+                        <div class="form-group">
+                            <label for="shippingEmailInput">Email</label>
+                            <input type="email" id="shippingEmailInput">
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="shippingFirstNameInput">First Name</label>
@@ -2128,8 +2151,16 @@
                             </div>
                         </div>
                         <div class="form-group">
+                            <label for="shippingPhoneInput">Phone</label>
+                            <input type="tel" id="shippingPhoneInput">
+                        </div>
+                        <div class="form-group">
                             <label for="shippingAddressInput">Address</label>
                             <input type="text" id="shippingAddressInput">
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingAddressDetailsInput">Address Details</label>
+                            <input type="text" id="shippingAddressDetailsInput" placeholder="Apartment, suite, etc. (optional)">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -2143,7 +2174,10 @@
                         </div>
                         <div class="form-group">
                             <label for="shippingCountryInput">Country</label>
-                            <input type="text" id="shippingCountryInput">
+                            <select id="shippingCountryInput">
+                                <option value="">Select Country</option>
+                                <option value="HR">Croatia</option>
+                            </select>
                         </div>
                     </div>
                 </div>
