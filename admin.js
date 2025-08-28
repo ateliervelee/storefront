@@ -103,12 +103,18 @@ class AdminPanel {
         const userHeader = document.getElementById('userHeader');
         const roleBadge = document.getElementById('roleBadge');
         const accessDeniedElement = document.getElementById('accessDenied');
+        const productsSection = document.getElementById('productsSection');
+        const ordersSection = document.getElementById('ordersSection');
         
         if (loginDialog) loginDialog.style.display = 'block';
         if (welcomeMessage) welcomeMessage.classList.remove('show');
         if (userHeader) userHeader.classList.remove('show');
         if (roleBadge) roleBadge.style.display = 'none';
         if (accessDeniedElement) accessDeniedElement.classList.remove('show');
+        
+        // Hide admin sections when signed out
+        if (productsSection) productsSection.style.display = 'none';
+        if (ordersSection) ordersSection.style.display = 'none';
     }
 
     async showWelcomeMessage(user) {
@@ -1143,6 +1149,7 @@ class AdminPanel {
         const roleBadge = document.getElementById('roleBadge');
         const accessDeniedElement = document.getElementById('accessDenied');
         const productsSection = document.getElementById('productsSection');
+        const ordersSection = document.getElementById('ordersSection');
 
         // Hide role badge for denied users
         if (roleBadge) {
@@ -1153,9 +1160,12 @@ class AdminPanel {
             accessDeniedElement.classList.add('show');
         }
 
-        // Hide products section for denied users
+        // Hide admin sections for denied users
         if (productsSection) {
             productsSection.style.display = 'none';
+        }
+        if (ordersSection) {
+            ordersSection.style.display = 'none';
         }
 
         console.log(`🚫 Access denied for: ${email}`);
