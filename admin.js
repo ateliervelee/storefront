@@ -1360,7 +1360,7 @@ class OrderManager {
         if (this.filteredOrders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--deep-taupe);">
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--deep-taupe);">
                         ${this.orders.length === 0 ? 'No orders found.' : 'No orders match your search.'}
                     </td>
                 </tr>
@@ -1394,6 +1394,9 @@ class OrderManager {
                     </td>
                     <td>
                         <span class="payment-status ${order.paymentStatus || ''}">${this.getPaymentStatusLabel(order.paymentStatus)}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        ${order.invoiceLink ? '<span style="font-size: 1.2rem;">✅</span>' : '<span style="font-size: 1.2rem;">⛔</span>'}
                     </td>
                     <td>
                         <div class="order-actions">
@@ -1443,6 +1446,7 @@ class OrderManager {
 
         document.getElementById('orderStatusSelect').value = order.status || '';
         document.getElementById('paymentStatusSelect').value = order.paymentStatus || '';
+        document.getElementById('invoiceLinkInput').value = order.invoiceLink || '';
         document.getElementById('trackingLinkInput').value = order.trackingLink || '';
 
         // Customer information
@@ -1582,6 +1586,7 @@ class OrderManager {
         return {
             status: document.getElementById('orderStatusSelect').value,
             paymentStatus: document.getElementById('paymentStatusSelect').value,
+            invoiceLink: document.getElementById('invoiceLinkInput').value,
             trackingLink: document.getElementById('trackingLinkInput').value,
             customerEmail: document.getElementById('customerEmailInput').value,
             billing: {

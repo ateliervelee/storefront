@@ -1991,6 +1991,7 @@
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Payment</th>
+                                <th>Invoice Generated</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -2059,6 +2060,13 @@
                                 <!-- Populated from constants -->
                             </select>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.5rem;">
+                            <label for="invoiceLinkInput">Invoice Link</label>
+                            <a href="https://e-racuni.com/rhr/login" target="_blank" style="color: var(--charcoal); text-decoration: none; font-size: 1rem; white-space: nowrap;">Generate Invoice</a>
+                        </div>
+                        <input type="url" id="invoiceLinkInput" placeholder="https://...">
                     </div>
                     <div class="form-group">
                         <label for="trackingLinkInput">Tracking Link</label>
