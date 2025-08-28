@@ -169,6 +169,41 @@ class ProductsManager {
             this.handleAddToCart(product, card);
         });
 
+        // Navigate to product detail with preselected variant SKU
+        const imageContainer = card.querySelector('.product-image-container');
+        if (imageContainer) {
+            imageContainer.style.cursor = 'pointer';
+            imageContainer.addEventListener('click', () => {
+                const selectedSizeEl = card.querySelector('.size-option.selected');
+                const selectedSize = selectedSizeEl ? selectedSizeEl.dataset.size : (availableSizes[0] || null);
+                const selectedVariant = selectedSize ? (product.variants.find(v => v.size === selectedSize) || product.variants[0]) : product.variants[0];
+                const sku = (selectedVariant && (selectedVariant.sku || selectedVariant.variantSku || selectedVariant.id)) || '';
+
+                // Store full product snapshot in session for instant hydration
+                try {
+                    const snapshot = {
+                        product,
+                        selectedVariantId: selectedVariant ? selectedVariant.id : null,
+                        selectedSize,
+                        selectedSku: sku || null,
+                        savedAt: Date.now()
+                    };
+                    sessionStorage.setItem('pd:last', JSON.stringify(snapshot));
+                    if (product && product.id) {
+                        sessionStorage.setItem(`pd:id:${product.id}`, JSON.stringify(snapshot));
+                    }
+                    if (sku) {
+                        sessionStorage.setItem(`pd:sku:${sku}`, JSON.stringify(snapshot));
+                    }
+                } catch (e) {
+                    // ignore storage errors
+                }
+
+                const url = sku ? `product.html?sku=${encodeURIComponent(sku)}` : `product.html`;
+                window.location.href = url;
+            });
+        }
+
         return card;
     }
 

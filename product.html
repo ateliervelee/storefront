@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - Atelier Veleé</title>
+    <title>Product • Atelier Veleé</title>
     <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
@@ -15,482 +15,203 @@
     <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
-    <!-- Header -->
-    <div id="header-container"></div>
+    <!-- Shared Header Placeholder -->
+    <header-placeholder></header-placeholder>
 
-    <!-- Product Details Page -->
-    <main class="product-page">
-        <!-- Product Gallery Section -->
-        <section class="product-gallery">
-            <div class="main-image-container">
-                <img id="mainProductImage" src="" alt="Product Image" class="main-product-image">
+    <!-- Product Detail Content -->
+    <main style="max-width: 1200px; margin: 0 auto; padding: 6rem 2rem 3rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;">
+            <div>
+                <div style="width: 100%; aspect-ratio: 3/4; background: var(--light-grey, #f5f5f5); border-radius: 12px; overflow: hidden;">
+                    <img id="pdMainImage" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
             </div>
-            <div class="thumbnail-gallery" id="thumbnailGallery">
-                <!-- Thumbnail images will be populated here -->
-            </div>
-        </section>
+            <div>
+                <h1 id="productName" style="font-family: 'Playfair Display', serif; font-size: 2.25rem; color: var(--charcoal, #2b2b2b); margin: 0 0 0.5rem 0;">Loading…</h1>
+                <div id="productPrice" style="font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto; font-size: 1.25rem; color: var(--charcoal, #2b2b2b); margin-bottom: 1.25rem;">—</div>
 
-        <!-- Product Info Section -->
-        <section class="product-info">
-            <div class="product-details">
-                <h1 class="product-name" id="productName">Loading...</h1>
-                <p class="product-description" id="productDescription">Loading product description...</p>
-                
-                <div class="product-price">
-                    <span class="current-price" id="productPrice">€0.00</span>
-                </div>
+                <div style="display: grid; gap: 1rem; max-width: 420px;">
+                    <label style="display: grid; gap: 0.25rem;">
+                        <span style="font-size: 0.9rem; color: var(--deep-taupe, #756d6a);">Size</span>
+                        <select id="sizeSelect" style="padding: 0.75rem 0.9rem; border: 1px solid var(--soft-beige, #e7e1db); border-radius: 8px; background: #fff; font-family: 'Inter', system-ui;">
+                            <option value="">Select size</option>
+                        </select>
+                    </label>
 
-                <!-- Size Selection -->
-                <div class="variant-selection">
-                    <div class="size-selection">
-                        <label class="selection-label">Size</label>
-                        <div class="size-options" id="sizeOptions">
-                            <!-- Size options will be populated here -->
-                        </div>
-                    </div>
+                    <label style="display: grid; gap: 0.25rem;">
+                        <span style="font-size: 0.9rem; color: var(--deep-taupe, #756d6a);">Color</span>
+                        <select id="colorSelect" style="padding: 0.75rem 0.9rem; border: 1px solid var(--soft-beige, #e7e1db); border-radius: 8px; background: #fff; font-family: 'Inter', system-ui;">
+                            <option value="">Select color</option>
+                        </select>
+                    </label>
 
-                    <!-- Color Selection -->
-                    <div class="color-selection" id="colorSelectionContainer" style="display: none;">
-                        <label class="selection-label">Color</label>
-                        <div class="color-options" id="colorOptions">
-                            <!-- Color options will be populated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quantity Selection -->
-                <div class="quantity-selection">
-                    <label class="selection-label">Quantity</label>
-                    <div class="quantity-controls">
-                        <button class="quantity-btn minus" id="quantityMinus">−</button>
-                        <input type="number" class="quantity-input" id="quantityInput" value="1" min="1" max="10">
-                        <button class="quantity-btn plus" id="quantityPlus">+</button>
-                    </div>
-                </div>
-
-                <!-- Add to Cart Button -->
-                <div class="product-actions">
-                    <button class="add-to-cart-btn" id="addToCartBtn" disabled>
-                        <span class="btn-text">Select Size</span>
-                        <span class="btn-loader" style="display: none;">
-                            <svg class="spinner" width="20" height="20" viewBox="0 0 50 50">
-                                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
-                                    <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
-                                    <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
-                                </circle>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-
-                <!-- Product Meta -->
-                <div class="product-meta">
-                    <div class="meta-item">
-                        <span class="meta-label">SKU:</span>
-                        <span class="meta-value" id="productSku">-</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="meta-label">Category:</span>
-                        <span class="meta-value" id="productCategory">Fashion</span>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <button id="addToCartBtn" style="flex: 1; padding: 0.9rem 1.1rem; border: none; border-radius: 10px; background: var(--charcoal, #2b2b2b); color: #fff; font-weight: 600; cursor: pointer;">Add to cart</button>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     </main>
 
-    <!-- Footer -->
-    <div id="footer-container"></div>
+    <!-- Shared Footer Placeholder -->
+    <footer-placeholder></footer-placeholder>
 
-    <!-- Scripts -->
-    <script src="firebase-config.js"></script>
-    <script src="cart.js"></script>
-    <script src="products.js"></script>
-    <script src="script.js"></script>
+    <!-- Script Loader (injects script.js, cart.js, etc.) -->
+    <script src="main.js"></script>
     <script>
-        // Load header and footer
-        fetch('header.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('header-container').innerHTML = data;
-                // Initialize cart functionality after header is loaded
-                if (typeof initializeCart === 'function') {
-                    initializeCart();
-                }
-                if (typeof initializeNavigation === 'function') {
-                    initializeNavigation();
-                }
-            });
-
-        fetch('footer.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('footer-container').innerHTML = data;
-            });
-
-        // Product page specific functionality
-        class ProductPage {
-            constructor() {
-                this.productId = null;
-                this.product = null;
-                this.selectedVariant = null;
-                this.selectedSize = null;
-                this.selectedColor = null;
-                this.quantity = 1;
-                
-                this.init();
-            }
-
-            init() {
-                // Get product ID from URL params
-                const urlParams = new URLSearchParams(window.location.search);
-                this.productId = urlParams.get('id');
-                
-                if (!this.productId) {
-                    window.location.href = '/';
-                    return;
-                }
-
-                this.setupEventListeners();
-                this.loadProduct();
-            }
-
-            setupEventListeners() {
-                // Quantity controls
-                document.getElementById('quantityMinus').addEventListener('click', () => {
-                    if (this.quantity > 1) {
-                        this.quantity--;
-                        document.getElementById('quantityInput').value = this.quantity;
-                    }
-                });
-
-                document.getElementById('quantityPlus').addEventListener('click', () => {
-                    const maxQuantity = this.selectedVariant ? this.selectedVariant.quantity : 10;
-                    if (this.quantity < maxQuantity) {
-                        this.quantity++;
-                        document.getElementById('quantityInput').value = this.quantity;
-                    }
-                });
-
-                document.getElementById('quantityInput').addEventListener('change', (e) => {
-                    const value = parseInt(e.target.value);
-                    const maxQuantity = this.selectedVariant ? this.selectedVariant.quantity : 10;
-                    if (value >= 1 && value <= maxQuantity) {
-                        this.quantity = value;
-                    } else {
-                        e.target.value = this.quantity;
-                    }
-                });
-
-                // Add to cart button
-                document.getElementById('addToCartBtn').addEventListener('click', () => {
-                    this.addToCart();
-                });
-            }
-
-            async loadProduct() {
-                try {
-                    // Show loading state
-                    document.getElementById('productName').textContent = 'Loading...';
-                    document.getElementById('productDescription').textContent = 'Loading product description...';
-
-                    // Get product from ProductManager
-                    if (typeof window.productManager !== 'undefined') {
-                        this.product = await window.productManager.getProductById(this.productId);
-                    } else {
-                        // Fallback: wait for ProductManager to load
-                        await new Promise(resolve => {
-                            const checkProductManager = () => {
-                                if (typeof window.productManager !== 'undefined') {
-                                    resolve();
-                                } else {
-                                    setTimeout(checkProductManager, 100);
-                                }
-                            };
-                            checkProductManager();
-                        });
-                        this.product = await window.productManager.getProductById(this.productId);
-                    }
-
-                    if (!this.product) {
-                        window.location.href = '/';
-                        return;
-                    }
-
-                    this.renderProduct();
-                } catch (error) {
-                    console.error('Error loading product:', error);
-                    window.location.href = '/';
-                }
-            }
-
-            renderProduct() {
-                // Update product info
-                document.getElementById('productName').textContent = this.product.name;
-                document.getElementById('productDescription').textContent = this.product.description;
-                document.getElementById('productCategory').textContent = this.product.category || 'Fashion';
-
-                // Render images
-                this.renderImages();
-
-                // Render variants
-                this.renderVariants();
-
-                // Update page title
-                document.title = `${this.product.name} - Atelier Veleé`;
-            }
-
-            renderImages() {
-                const mainImage = document.getElementById('mainProductImage');
-                const thumbnailGallery = document.getElementById('thumbnailGallery');
-
-                // Set main image
-                const firstImage = this.product.images && this.product.images.length > 0 
-                    ? this.product.images[0] 
-                    : 'assets/images/placeholder.jpg';
-                
-                mainImage.src = `assets/images/${firstImage}`;
-                mainImage.alt = this.product.name;
-
-                // Clear and populate thumbnails
-                thumbnailGallery.innerHTML = '';
-
-                if (this.product.images && this.product.images.length > 1) {
-                    this.product.images.forEach((image, index) => {
-                        const thumb = document.createElement('div');
-                        thumb.className = `thumbnail ${index === 0 ? 'active' : ''}`;
-                        thumb.innerHTML = `<img src="assets/images/${image}" alt="${this.product.name} ${index + 1}">`;
-                        
-                        thumb.addEventListener('click', () => {
-                            mainImage.src = `assets/images/${image}`;
-                            // Update active thumbnail
-                            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-                            thumb.classList.add('active');
-                        });
-
-                        thumbnailGallery.appendChild(thumb);
-                    });
-                }
-            }
-
-            renderVariants() {
-                if (!this.product.variants || this.product.variants.length === 0) {
-                    document.getElementById('productPrice').textContent = '€0.00';
-                    return;
-                }
-
-                // Group variants by size and color
-                const sizeMap = new Map();
-                const colorSet = new Set();
-
-                this.product.variants.forEach(variant => {
-                    if (!sizeMap.has(variant.size)) {
-                        sizeMap.set(variant.size, []);
-                    }
-                    sizeMap.get(variant.size).push(variant);
-                    
-                    if (variant.color) {
-                        colorSet.add(variant.color);
-                    }
-                });
-
-                // Render size options
-                this.renderSizeOptions(sizeMap);
-
-                // Render color options if there are colors
-                if (colorSet.size > 0) {
-                    this.renderColorOptions(colorSet);
-                    document.getElementById('colorSelectionContainer').style.display = 'block';
-                }
-            }
-
-            renderSizeOptions(sizeMap) {
-                const sizeOptions = document.getElementById('sizeOptions');
-                sizeOptions.innerHTML = '';
-
-                Array.from(sizeMap.keys()).forEach(size => {
-                    const variants = sizeMap.get(size);
-                    const isAvailable = variants.some(v => v.quantity > 0);
-                    
-                    const sizeOption = document.createElement('button');
-                    sizeOption.className = `size-option ${!isAvailable ? 'disabled' : ''}`;
-                    sizeOption.textContent = size;
-                    sizeOption.disabled = !isAvailable;
-
-                    sizeOption.addEventListener('click', () => {
-                        if (!isAvailable) return;
-                        
-                        this.selectedSize = size;
-                        this.selectedColor = null; // Reset color selection
-                        
-                        // Update UI
-                        document.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('selected'));
-                        sizeOption.classList.add('selected');
-                        
-                        // Update color options for selected size
-                        this.updateColorOptionsForSize(size);
-                        this.updateVariantSelection();
-                    });
-
-                    sizeOptions.appendChild(sizeOption);
-                });
-            }
-
-            renderColorOptions(colorSet) {
-                const colorOptions = document.getElementById('colorOptions');
-                colorOptions.innerHTML = '';
-
-                Array.from(colorSet).forEach(color => {
-                    const colorOption = document.createElement('button');
-                    colorOption.className = 'color-option';
-                    colorOption.textContent = color;
-                    colorOption.style.setProperty('--color', this.getColorValue(color));
-
-                    colorOption.addEventListener('click', () => {
-                        this.selectedColor = color;
-                        
-                        // Update UI
-                        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-                        colorOption.classList.add('selected');
-                        
-                        this.updateVariantSelection();
-                    });
-
-                    colorOptions.appendChild(colorOption);
-                });
-            }
-
-            updateColorOptionsForSize(selectedSize) {
-                const availableColors = new Set();
-                
-                this.product.variants
-                    .filter(v => v.size === selectedSize && v.quantity > 0)
-                    .forEach(v => {
-                        if (v.color) availableColors.add(v.color);
-                    });
-
-                document.querySelectorAll('.color-option').forEach(opt => {
-                    const color = opt.textContent;
-                    opt.disabled = !availableColors.has(color);
-                    opt.classList.toggle('disabled', !availableColors.has(color));
-                    
-                    if (!availableColors.has(color)) {
-                        opt.classList.remove('selected');
-                    }
-                });
-
-                // Clear color selection if current color is not available
-                if (this.selectedColor && !availableColors.has(this.selectedColor)) {
-                    this.selectedColor = null;
-                }
-            }
-
-            updateVariantSelection() {
-                // Find matching variant
-                this.selectedVariant = this.product.variants.find(variant => {
-                    return variant.size === this.selectedSize && 
-                           (!variant.color || variant.color === this.selectedColor || !this.selectedColor);
-                });
-
-                if (this.selectedVariant) {
-                    // Update price
-                    document.getElementById('productPrice').textContent = `€${(this.selectedVariant.price / 100).toFixed(2)}`;
-                    
-                    // Update SKU
-                    document.getElementById('productSku').textContent = this.selectedVariant.sku || '-';
-                    
-                    // Update quantity max
-                    const quantityInput = document.getElementById('quantityInput');
-                    quantityInput.max = this.selectedVariant.quantity;
-                    if (this.quantity > this.selectedVariant.quantity) {
-                        this.quantity = Math.max(1, this.selectedVariant.quantity);
-                        quantityInput.value = this.quantity;
-                    }
-
-                    // Enable add to cart button
-                    const addToCartBtn = document.getElementById('addToCartBtn');
-                    addToCartBtn.disabled = false;
-                    addToCartBtn.querySelector('.btn-text').textContent = 'Add to Cart';
-                } else {
-                    // Reset state
-                    document.getElementById('productPrice').textContent = '€0.00';
-                    document.getElementById('productSku').textContent = '-';
-                    
-                    const addToCartBtn = document.getElementById('addToCartBtn');
-                    addToCartBtn.disabled = true;
-                    addToCartBtn.querySelector('.btn-text').textContent = 'Select Size';
-                }
-            }
-
-            getColorValue(colorName) {
-                const colorMap = {
-                    'red': '#DC2626',
-                    'blue': '#2563EB',
-                    'green': '#16A34A',
-                    'black': '#000000',
-                    'white': '#FFFFFF',
-                    'gray': '#6B7280',
-                    'brown': '#92400E',
-                    'pink': '#EC4899',
-                    'purple': '#7C3AED',
-                    'yellow': '#EAB308'
-                };
-                return colorMap[colorName.toLowerCase()] || '#6B7280';
-            }
-
-            async addToCart() {
-                if (!this.selectedVariant || !window.cartManager) {
-                    return;
-                }
-
-                const addToCartBtn = document.getElementById('addToCartBtn');
-                const btnText = addToCartBtn.querySelector('.btn-text');
-                const btnLoader = addToCartBtn.querySelector('.btn-loader');
-
-                try {
-                    // Show loading state
-                    addToCartBtn.disabled = true;
-                    btnText.style.display = 'none';
-                    btnLoader.style.display = 'inline-flex';
-
-                    // Add to cart
-                    await window.cartManager.addToCart(
-                        this.productId,
-                        this.selectedVariant.id,
-                        this.quantity,
-                        {
-                            name: this.product.name,
-                            image: this.product.images ? this.product.images[0] : null,
-                            size: this.selectedSize,
-                            color: this.selectedColor,
-                            price: this.selectedVariant.price,
-                            sku: this.selectedVariant.sku
-                        }
-                    );
-
-                    // Success feedback
-                    btnText.textContent = 'Added to Cart!';
-                    setTimeout(() => {
-                        btnText.textContent = 'Add to Cart';
-                    }, 2000);
-
-                } catch (error) {
-                    console.error('Error adding to cart:', error);
-                    btnText.textContent = 'Error - Try Again';
-                    setTimeout(() => {
-                        btnText.textContent = 'Add to Cart';
-                    }, 2000);
-                } finally {
-                    // Hide loading state
-                    btnText.style.display = 'inline';
-                    btnLoader.style.display = 'none';
-                    addToCartBtn.disabled = false;
-                }
-            }
+        // Simple helpers (scoped to this page)
+        function pdFormatPrice(price, currency = 'EUR') {
+            if (typeof price !== 'number') return '—';
+            const euros = Math.floor(price / 100);
+            const cents = price % 100;
+            if (currency === 'EUR') return `€${euros}.${cents.toString().padStart(2, '0')}`;
+            return `${currency} ${euros}.${cents.toString().padStart(2, '0')}`;
         }
+        function pdImageUrl(name) {
+            if (!name) return '';
+            if (name.startsWith('http')) return name;
+            return `assets/images/${name}`;
+        }
+        function unique(list) { return Array.from(new Set(list)); }
 
-        // Initialize product page when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            window.productPage = new ProductPage();
+        // In-memory page state
+        window.pdState = { product: null, variants: [], selectedVariant: null };
+
+        document.addEventListener('allScriptsLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
+            const skuParam = params.get('sku');
+
+            const nameEl = document.getElementById('productName');
+            const priceEl = document.getElementById('productPrice');
+            const imgEl = document.getElementById('pdMainImage');
+            const sizeSelect = document.getElementById('sizeSelect');
+            const colorSelect = document.getElementById('colorSelect');
+            const addBtn = document.getElementById('addToCartBtn');
+
+            const setName = (n) => { if (nameEl) nameEl.textContent = n || 'Product'; };
+            const setPrice = (p, c) => { if (priceEl) priceEl.textContent = pdFormatPrice(p, c || 'EUR'); };
+            const setImage = (src, alt) => { if (imgEl) { imgEl.src = src || ''; imgEl.alt = alt || ''; } };
+
+            function applyVariant(variant) {
+                if (!variant) return;
+                window.pdState.selectedVariant = variant;
+                setPrice(variant.price, variant.currency);
+            }
+
+            function populateSelectors(product) {
+                const sizes = unique((product.variants || []).map(v => v.size).filter(Boolean)).sort((a,b) => {
+                    const order = ['XS','S','M','L','XL','XXL'];
+                    return order.indexOf(a) - order.indexOf(b);
+                });
+                const colors = unique((product.variants || []).map(v => v.color).filter(Boolean));
+
+                sizeSelect.innerHTML = '<option value="">Select size</option>' + sizes.map(s => `<option value="${s}">${s}</option>`).join('');
+                colorSelect.innerHTML = '<option value="">Select color</option>' + colors.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+
+            function findVariant(product, size, color) {
+                if (!product?.variants) return null;
+                // Prefer exact size+color match, else first by size, else first
+                return product.variants.find(v => v.size === size && v.color === color) ||
+                       product.variants.find(v => v.size === size) ||
+                       product.variants[0] || null;
+            }
+
+            function updateFromSelectors() {
+                const size = sizeSelect.value || null;
+                const color = colorSelect.value || null;
+                const variant = findVariant(window.pdState.product, size, color);
+                applyVariant(variant);
+            }
+
+            addBtn.addEventListener('click', () => {
+                const product = window.pdState.product;
+                const variant = window.pdState.selectedVariant;
+                if (!product || !variant) return;
+                if (!window.shoppingCart) return;
+                window.shoppingCart.addToCart(product.id, variant.id, 1, product, variant);
+            });
+
+            sizeSelect.addEventListener('change', updateFromSelectors);
+            colorSelect.addEventListener('change', updateFromSelectors);
+
+            // 1) Try sessionStorage hydration for instant render
+            let snapshot = null;
+            try {
+                if (skuParam && sessionStorage.getItem(`pd:sku:${skuParam}`)) {
+                    snapshot = JSON.parse(sessionStorage.getItem(`pd:sku:${skuParam}`));
+                } else if (productId && sessionStorage.getItem(`pd:id:${productId}`)) {
+                    snapshot = JSON.parse(sessionStorage.getItem(`pd:id:${productId}`));
+                } else if (sessionStorage.getItem('pd:last')) {
+                    snapshot = JSON.parse(sessionStorage.getItem('pd:last'));
+                }
+            } catch (e) {}
+
+            if (snapshot?.product) {
+                const product = snapshot.product;
+                window.pdState.product = product;
+                window.pdState.variants = product.variants || [];
+                setName(product.name);
+                setImage(pdImageUrl(product.images?.[0]), product.name || '');
+                populateSelectors(product);
+
+                // Preselect by sku/id if possible
+                let initialVariant = null;
+                if (skuParam) {
+                    initialVariant = (product.variants || []).find(v => (v.sku || v.variantSku || v.id) === skuParam) || null;
+                }
+                if (!initialVariant && snapshot.selectedVariantId) {
+                    initialVariant = (product.variants || []).find(v => v.id === snapshot.selectedVariantId) || null;
+                }
+                if (!initialVariant) initialVariant = (product.variants || [])[0] || null;
+
+                // Set selectors to match initial variant
+                if (initialVariant) {
+                    if (initialVariant.size) sizeSelect.value = initialVariant.size;
+                    if (initialVariant.color) colorSelect.value = initialVariant.color;
+                }
+                applyVariant(initialVariant);
+            }
+
+            // 2) Optional: refresh from Firestore if we have an explicit product id
+            if (productId && window.firebaseServices && window.firebaseServices.db) {
+                try {
+                    const db = window.firebaseServices.db;
+                    const doc = await db.collection('products').doc(productId).get();
+                    if (doc.exists) {
+                        const data = doc.data() || {};
+                        const product = { id: productId, ...data };
+
+                        // Fetch variants subcollection
+                        const variantsSnap = await db.collection('products').doc(productId).collection('variants').get();
+                        product.variants = variantsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                        window.pdState.product = product;
+                        window.pdState.variants = product.variants || [];
+                        setName(product.name);
+                        setImage(pdImageUrl(product.images?.[0]), product.name || '');
+                        populateSelectors(product);
+
+                        // Choose best initial variant again (respect current selections)
+                        const size = sizeSelect.value || product.variants?.[0]?.size || '';
+                        const color = colorSelect.value || product.variants?.[0]?.color || '';
+                        const refreshed = findVariant(product, size, color);
+                        applyVariant(refreshed);
+
+                        // Persist snapshot for speed on future navigations
+                        try {
+                            const selectedSku = (refreshed && (refreshed.sku || refreshed.variantSku || refreshed.id)) || null;
+                            const snap = { product, selectedVariantId: refreshed?.id || null, selectedSku, savedAt: Date.now() };
+                            sessionStorage.setItem(`pd:id:${productId}`, JSON.stringify(snap));
+                            sessionStorage.setItem('pd:last', JSON.stringify(snap));
+                            if (selectedSku) sessionStorage.setItem(`pd:sku:${selectedSku}`, JSON.stringify(snap));
+                        } catch (e) {}
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
         });
     </script>
 </body>
