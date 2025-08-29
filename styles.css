@@ -1101,6 +1101,12 @@ p {
     border-color: var(--warm-sand);
 }
 
+/* Disabled size appearance */
+.size-option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .color-info {
     display: flex;
     align-items: center;
@@ -1137,8 +1143,16 @@ p {
     border-radius: 3px;
 }
 
-.add-to-cart:hover {
+/* Hover only when enabled */
+.add-to-cart:hover:not(:disabled) {
     background: var(--deep-taupe);
+}
+
+/* Disabled add-to-cart appearance */
+.add-to-cart:disabled {
+    background: #e0e0e0;
+    color: #8c8c8c;
+    cursor: not-allowed;
 }
 
 /* Skeleton Loading */

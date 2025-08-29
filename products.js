@@ -121,7 +121,10 @@ class ProductsManager {
             return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
         });
         
-        const currentVariant = product.variants.find(v => v.size === availableSizes[0]);
+        const firstAvailableSize = availableSizes.find(s => product.variants.some(v => v.size === s && (v.quantity || 0) > 0)) || null;
+        const currentVariant = firstAvailableSize
+            ? (product.variants.find(v => v.size === firstAvailableSize && (v.quantity || 0) > 0) || product.variants.find(v => v.size === firstAvailableSize))
+            : product.variants[0];
         const imageUrl = this.buildImageUrl(product.images?.[0]);
 
         card.innerHTML = `
@@ -136,12 +139,16 @@ class ProductsManager {
                 <div class="product-options">
                     <div class="product-variants">
                         <div class="size-selector">
-                            ${availableSizes.map(size => `
-                                <button class="size-option ${size === availableSizes[0] ? 'selected' : ''}" 
-                                        data-size="${size}" data-product-id="${product.id}">
-                                    ${size}
-                                </button>
-                            `).join('')}
+                            ${availableSizes.map(size => {
+                                const hasStock = product.variants.some(v => v.size === size && (v.quantity || 0) > 0);
+                                const isSelected = firstAvailableSize ? (size === firstAvailableSize) : false;
+                                return `
+                                    <button class="size-option ${isSelected ? 'selected' : ''}" 
+                                            data-size="${size}" data-product-id="${product.id}" ${hasStock ? '' : 'disabled'}>
+                                        ${size}
+                                    </button>
+                                `;
+                            }).join('')}
                         </div>
                         <div class="color-info">
                             <div class="color-circle" data-color="${currentVariant.color}"></div>
@@ -163,8 +170,13 @@ class ProductsManager {
             });
         });
 
-        // Add event listener for add to cart
+        // Initialize add-to-cart state
         const addToCartBtn = card.querySelector('.add-to-cart');
+        const anyInStock = product.variants.some(v => (v.quantity || 0) > 0);
+        addToCartBtn.disabled = !anyInStock;
+        addToCartBtn.textContent = addToCartBtn.disabled ? 'Sold out' : 'Add to Cart';
+
+        // Add event listener for add to cart
         addToCartBtn.addEventListener('click', () => {
             this.handleAddToCart(product, card);
         });
@@ -232,7 +244,18 @@ class ProductsManager {
             // Update add to cart button
             const addToCartBtn = card.querySelector('.add-to-cart');
             addToCartBtn.dataset.variantId = selectedVariant.id;
+
+            // Toggle add-to-cart based on selected variant stock
+            addToCartBtn.disabled = !((selectedVariant.quantity || 0) > 0);
+            addToCartBtn.textContent = addToCartBtn.disabled ? 'Sold out' : 'Add to Cart';
         }
+
+        // Also reflect disabled state for size buttons after selection
+        const disabledByStock = (size) => !product.variants.some(v => v.size === size && (v.quantity || 0) > 0);
+        sizeOptions.forEach(option => {
+            const size = option.dataset.size;
+            option.disabled = disabledByStock(size);
+        });
     }
 
     sortVariantsBySize(variants) {
