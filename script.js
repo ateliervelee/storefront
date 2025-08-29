@@ -40,6 +40,13 @@ window.addEventListener('scroll', () => {
     const navbarEl = document.querySelector('.navbar');
     if (!navbarEl) return;
 
+    // On product detail page, keep navbar in final scrolled state
+    if (document.body.classList.contains('pd-page')) {
+        navbarEl.style.setProperty('--navbar-bg-opacity', 1);
+        navbarEl.classList.add('scrolled');
+        return;
+    }
+
     const currentScrollY = window.scrollY;
     const maxScroll = 200; // Distance to scroll for full background opacity
     
@@ -307,12 +314,18 @@ document.addEventListener('allScriptsLoaded', async () => {
     // Initialize navbar background state
     const navEl = document.querySelector('.navbar');
     if (navEl) {
-        const currentScrollY = window.scrollY;
-        const maxScroll = 200;
-        let bgOpacity = Math.min(currentScrollY / maxScroll, 1);
-        navEl.style.setProperty('--navbar-bg-opacity', bgOpacity);
-        if (currentScrollY > 50) {
+        if (document.body.classList.contains('pd-page')) {
+            // Force final scrolled style on product page
+            navEl.style.setProperty('--navbar-bg-opacity', 1);
             navEl.classList.add('scrolled');
+        } else {
+            const currentScrollY = window.scrollY;
+            const maxScroll = 200;
+            let bgOpacity = Math.min(currentScrollY / maxScroll, 1);
+            navEl.style.setProperty('--navbar-bg-opacity', bgOpacity);
+            if (currentScrollY > 50) {
+                navEl.classList.add('scrolled');
+            }
         }
     }
 

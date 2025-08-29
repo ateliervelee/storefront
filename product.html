@@ -13,14 +13,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=5">
+    <style>
+        body.pd-page { background: #fff; }
+        /* Page-scoped swatch styles */
+        .swatches-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .swatch-btn { width: 36px; height: 36px; border: 1px solid var(--soft-beige, #e7e1db); border-radius: 6px; background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease; }
+        .swatch-btn:hover { transform: translateY(-1px); }
+        .swatch-btn.selected { outline: 2px solid var(--charcoal, #2b2b2b); outline-offset: 2px; }
+        .swatch-btn[disabled] { cursor: not-allowed; opacity: 0.45; filter: grayscale(0.3); }
+        .color-swatch { border-radius: 6px; overflow: hidden; padding: 0; }
+        .color-swatch .dot { width: 100%; height: 100%; border-radius: 4px; }
+        .size-swatch { font-family: 'Inter', system-ui; font-weight: 600; color: var(--charcoal, #2b2b2b); background: #fff; }
+        .swatch-label { font-size: 0.9rem; color: var(--deep-taupe, #756d6a); margin-bottom: 0.25rem; }
+        /* Add-to-cart disabled state */
+        #addToCartBtn[disabled] { background: #e0e0e0 !important; color: #8c8c8c !important; cursor: not-allowed; opacity: 0.85; }
+    </style>
 </head>
-<body>
+<body class="pd-page">
     <!-- Shared Header Placeholder -->
     <header-placeholder></header-placeholder>
 
     <!-- Product Detail Content -->
     <main style="max-width: 1200px; margin: 0 auto; padding: 6rem 2rem 3rem;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;">
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 3rem; align-items: start;">
             <div>
                 <div style="width: 100%; aspect-ratio: 3/4; background: var(--light-grey, #f5f5f5); border-radius: 12px; overflow: hidden;">
                     <img id="pdMainImage" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;">
@@ -31,19 +46,15 @@
                 <div id="productPrice" style="font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto; font-size: 1.25rem; color: var(--charcoal, #2b2b2b); margin-bottom: 1.25rem;">—</div>
 
                 <div style="display: grid; gap: 1rem; max-width: 420px;">
-                    <label style="display: grid; gap: 0.25rem;">
-                        <span style="font-size: 0.9rem; color: var(--deep-taupe, #756d6a);">Size</span>
-                        <select id="sizeSelect" style="padding: 0.75rem 0.9rem; border: 1px solid var(--soft-beige, #e7e1db); border-radius: 8px; background: #fff; font-family: 'Inter', system-ui;">
-                            <option value="">Select size</option>
-                        </select>
-                    </label>
+                    <div style="display: grid; gap: 0.25rem;">
+                        <span class="swatch-label">Available colors</span>
+                        <div id="colorSwatches" class="swatches-row"></div>
+                    </div>
 
-                    <label style="display: grid; gap: 0.25rem;">
-                        <span style="font-size: 0.9rem; color: var(--deep-taupe, #756d6a);">Color</span>
-                        <select id="colorSelect" style="padding: 0.75rem 0.9rem; border: 1px solid var(--soft-beige, #e7e1db); border-radius: 8px; background: #fff; font-family: 'Inter', system-ui;">
-                            <option value="">Select color</option>
-                        </select>
-                    </label>
+                    <div style="display: grid; gap: 0.25rem;">
+                        <span class="swatch-label">Available sizes</span>
+                        <div id="sizeSwatches" class="swatches-row"></div>
+                    </div>
 
                     <div style="display: flex; gap: 0.75rem; align-items: center;">
                         <button id="addToCartBtn" style="flex: 1; padding: 0.9rem 1.1rem; border: none; border-radius: 10px; background: var(--charcoal, #2b2b2b); color: #fff; font-weight: 600; cursor: pointer;">Add to cart</button>
@@ -73,9 +84,15 @@
             return `assets/images/${name}`;
         }
         function unique(list) { return Array.from(new Set(list)); }
+                    function colorNameToCss(name) {
+                if (!name) return '#ccc';
+                const map = (window.PRODUCT_CONSTANTS && window.PRODUCT_CONSTANTS.colorHexMap) || window.PRODUCT_COLOR_HEX_MAP || {};
+                const key = String(name).toLowerCase();
+                return map[key] || name;
+            }
 
         // In-memory page state
-        window.pdState = { product: null, variants: [], selectedVariant: null };
+        window.pdState = { product: null, variants: [], selectedVariant: null, selectedColor: null, selectedSize: null };
 
         document.addEventListener('allScriptsLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
@@ -85,44 +102,120 @@
             const nameEl = document.getElementById('productName');
             const priceEl = document.getElementById('productPrice');
             const imgEl = document.getElementById('pdMainImage');
-            const sizeSelect = document.getElementById('sizeSelect');
-            const colorSelect = document.getElementById('colorSelect');
+            const colorRow = document.getElementById('colorSwatches');
+            const sizeRow = document.getElementById('sizeSwatches');
             const addBtn = document.getElementById('addToCartBtn');
+            if (addBtn) addBtn.disabled = true;
 
             const setName = (n) => { if (nameEl) nameEl.textContent = n || 'Product'; };
-            const setPrice = (p, c) => { if (priceEl) priceEl.textContent = pdFormatPrice(p, c || 'EUR'); };
+            const setPrice = (p, c) => { if (priceEl) priceEl.textContent = pdFormatPrice((p ?? 0), c || 'EUR'); };
             const setImage = (src, alt) => { if (imgEl) { imgEl.src = src || ''; imgEl.alt = alt || ''; } };
 
             function applyVariant(variant) {
                 if (!variant) return;
                 window.pdState.selectedVariant = variant;
-                setPrice(variant.price, variant.currency);
+                const priceVal = (typeof variant.price === 'number') ? variant.price : (typeof variant.unitPrice === 'number' ? variant.unitPrice : 0);
+                setPrice(priceVal, variant.currency);
             }
 
-            function populateSelectors(product) {
-                const sizes = unique((product.variants || []).map(v => v.size).filter(Boolean)).sort((a,b) => {
-                    const order = ['XS','S','M','L','XL','XXL'];
-                    return order.indexOf(a) - order.indexOf(b);
-                });
-                const colors = unique((product.variants || []).map(v => v.color).filter(Boolean));
-
-                sizeSelect.innerHTML = '<option value="">Select size</option>' + sizes.map(s => `<option value="${s}">${s}</option>`).join('');
-                colorSelect.innerHTML = '<option value="">Select color</option>' + colors.map(c => `<option value="${c}">${c}</option>`).join('');
+            function hasStock(variant) { return (variant && typeof variant.quantity === 'number') ? variant.quantity > 0 : true; }
+            function sizesInOrder(sizes) {
+                const order = ['XS','S','M','L','XL','XXL'];
+                return [...sizes].sort((a,b) => order.indexOf(a) - order.indexOf(b));
             }
-
+            function availableColors(product, sizeFilter = null) {
+                const list = (product.variants || []).filter(v => (!sizeFilter || v.size === sizeFilter) && hasStock(v)).map(v => v.color).filter(Boolean);
+                return unique(list);
+            }
+            function availableSizes(product, colorFilter = null) {
+                const list = (product.variants || []).filter(v => (!colorFilter || v.color === colorFilter) && hasStock(v)).map(v => v.size).filter(Boolean);
+                return sizesInOrder(unique(list));
+            }
             function findVariant(product, size, color) {
                 if (!product?.variants) return null;
-                // Prefer exact size+color match, else first by size, else first
-                return product.variants.find(v => v.size === size && v.color === color) ||
-                       product.variants.find(v => v.size === size) ||
-                       product.variants[0] || null;
+                const variants = product.variants;
+                return variants.find(v => v.size === size && v.color === color && hasStock(v)) ||
+                       variants.find(v => v.size === size && hasStock(v)) ||
+                       variants.find(v => v.color === color && hasStock(v)) ||
+                       variants.find(v => hasStock(v)) || null;
             }
-
-            function updateFromSelectors() {
-                const size = sizeSelect.value || null;
-                const color = colorSelect.value || null;
-                const variant = findVariant(window.pdState.product, size, color);
-                applyVariant(variant);
+            // Toggle add-to-cart availability based on sizes and selected variant
+            function updateAddButtonState(product) {
+                if (!addBtn) return;
+                const colorFilter = window.pdState.selectedColor || null;
+                const sizes = availableSizes(product, colorFilter);
+                const sizeAvailable = sizes.length > 0;
+                const variant = window.pdState.selectedVariant;
+                const canAdd = sizeAvailable && !!variant && hasStock(variant);
+                addBtn.disabled = !canAdd;
+            }
+            function renderColorSwatches(product) {
+                if (!colorRow) return;
+                const sizeFilter = window.pdState.selectedSize || null;
+                const colors = availableColors(product, sizeFilter);
+                const current = window.pdState.selectedColor;
+                const allColors = unique((product.variants || []).map(v => v.color).filter(Boolean));
+                colorRow.innerHTML = allColors.map(c => {
+                    const enabled = colors.includes(c);
+                    const selected = current === c;
+                    const bg = colorNameToCss(c);
+                    return `<button class="swatch-btn color-swatch${selected ? ' selected' : ''}" data-color="${c}" title="${c}" aria-label="Color ${c}"><span class="dot" style="background:${bg};"></span></button>`;
+                }).join('');
+            }
+            function renderSizeSwatches(product) {
+                if (!sizeRow) return;
+                const colorFilter = window.pdState.selectedColor || null;
+                const sizesEnabled = availableSizes(product, colorFilter);
+                const allSizes = sizesInOrder(unique((product.variants || []).map(v => v.size).filter(Boolean)));
+                const current = window.pdState.selectedSize;
+                sizeRow.innerHTML = allSizes.map(s => {
+                    const enabled = sizesEnabled.includes(s);
+                    const selected = current === s;
+                    return `<button class="swatch-btn size-swatch${selected ? ' selected' : ''}" data-size="${s}" ${enabled ? '' : 'disabled'} aria-label="Size ${s}">${s}</button>`;
+                }).join('');
+            }
+            function selectColor(product, color) {
+                window.pdState.selectedColor = color;
+                // Update sizes based on color
+                const sizes = availableSizes(product, color);
+                if (!sizes.includes(window.pdState.selectedSize)) {
+                    window.pdState.selectedSize = sizes.length > 0 ? sizes[0] : null;
+                }
+                // Pick best variant (only if a size exists)
+                const v = window.pdState.selectedSize ? findVariant(product, window.pdState.selectedSize, window.pdState.selectedColor) : null;
+                applyVariant(v);
+                renderColorSwatches(product);
+                renderSizeSwatches(product);
+                updateAddButtonState(product);
+            }
+            function selectSize(product, size) {
+                window.pdState.selectedSize = size;
+                // Update colors based on size
+                const colors = availableColors(product, size);
+                if (window.pdState.selectedColor && !colors.includes(window.pdState.selectedColor)) {
+                    window.pdState.selectedColor = colors[0] || null;
+                }
+                const v = window.pdState.selectedSize ? findVariant(product, window.pdState.selectedSize, window.pdState.selectedColor) : null;
+                applyVariant(v);
+                renderColorSwatches(product);
+                renderSizeSwatches(product);
+                updateAddButtonState(product);
+            }
+            function wireSwatchEvents(product) {
+                if (colorRow) {
+                    colorRow.addEventListener('click', (e) => {
+                        const btn = e.target.closest('[data-color]');
+                        if (!btn || btn.disabled) return;
+                        selectColor(product, btn.getAttribute('data-color'));
+                    });
+                }
+                if (sizeRow) {
+                    sizeRow.addEventListener('click', (e) => {
+                        const btn = e.target.closest('[data-size]');
+                        if (!btn || btn.disabled) return;
+                        selectSize(product, btn.getAttribute('data-size'));
+                    });
+                }
             }
 
             addBtn.addEventListener('click', () => {
@@ -132,9 +225,6 @@
                 if (!window.shoppingCart) return;
                 window.shoppingCart.addToCart(product.id, variant.id, 1, product, variant);
             });
-
-            sizeSelect.addEventListener('change', updateFromSelectors);
-            colorSelect.addEventListener('change', updateFromSelectors);
 
             // 1) Try sessionStorage hydration for instant render
             let snapshot = null;
@@ -154,7 +244,8 @@
                 window.pdState.variants = product.variants || [];
                 setName(product.name);
                 setImage(pdImageUrl(product.images?.[0]), product.name || '');
-                populateSelectors(product);
+                // Initial selection & UI
+                wireSwatchEvents(product);
 
                 // Preselect by sku/id if possible
                 let initialVariant = null;
@@ -166,12 +257,20 @@
                 }
                 if (!initialVariant) initialVariant = (product.variants || [])[0] || null;
 
-                // Set selectors to match initial variant
                 if (initialVariant) {
-                    if (initialVariant.size) sizeSelect.value = initialVariant.size;
-                    if (initialVariant.color) colorSelect.value = initialVariant.color;
+                    window.pdState.selectedSize = initialVariant.size || null;
+                    window.pdState.selectedColor = initialVariant.color || null;
                 }
-                applyVariant(initialVariant);
+                const __sizesForInitialColor = availableSizes(product, window.pdState.selectedColor || null);
+                if (__sizesForInitialColor.length === 0) {
+                    window.pdState.selectedSize = null;
+                    window.pdState.selectedVariant = null;
+                }
+                renderColorSwatches(product);
+                renderSizeSwatches(product);
+                const __effVariant = window.pdState.selectedSize ? findVariant(product, window.pdState.selectedSize, window.pdState.selectedColor) : null;
+                applyVariant(__effVariant);
+                updateAddButtonState(product);
             }
 
             // 2) Optional: refresh from Firestore if we have an explicit product id
@@ -191,13 +290,16 @@
                         window.pdState.variants = product.variants || [];
                         setName(product.name);
                         setImage(pdImageUrl(product.images?.[0]), product.name || '');
-                        populateSelectors(product);
+                        wireSwatchEvents(product);
+                        renderColorSwatches(product);
+                        renderSizeSwatches(product);
 
                         // Choose best initial variant again (respect current selections)
-                        const size = sizeSelect.value || product.variants?.[0]?.size || '';
-                        const color = colorSelect.value || product.variants?.[0]?.color || '';
+                        const size = window.pdState.selectedSize || product.variants?.[0]?.size || '';
+                        const color = window.pdState.selectedColor || product.variants?.[0]?.color || '';
                         const refreshed = findVariant(product, size, color);
                         applyVariant(refreshed);
+                        updateAddButtonState(product);
 
                         // Persist snapshot for speed on future navigations
                         try {

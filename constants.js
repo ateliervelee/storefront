@@ -84,6 +84,27 @@ const PRODUCT_CONSTANTS = {
     ]
 };
 
+// Reusable color hex map for swatches across admin/storefront
+const PRODUCT_COLOR_HEX_MAP = {
+    black: '#000000',
+    white: '#ffffff',
+    navy: '#001f3f',
+    red: '#dc3545',
+    blue: '#007bff',
+    green: '#28a745',
+    pink: '#e91e63',
+    beige: '#f5f5dc',
+    brown: '#8b4513',
+    gray: '#6c757d',
+    grey: '#6c757d',
+    gold: '#ffd700',
+    yellow: '#ffeb3b',
+    silver: '#c0c0c0'
+};
+
+// Attach to PRODUCT_CONSTANTS for convenient access
+PRODUCT_CONSTANTS.colorHexMap = PRODUCT_COLOR_HEX_MAP;
+
 // Cart and Storage Constants
 const STORAGE_CONSTANTS = {
     cartKey: 'ateliervelee_cart',
@@ -96,8 +117,9 @@ const STORAGE_CONSTANTS = {
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { PRODUCT_CONSTANTS, STORAGE_CONSTANTS };
+    module.exports = { PRODUCT_CONSTANTS, STORAGE_CONSTANTS, PRODUCT_COLOR_HEX_MAP };
 } else {
     window.PRODUCT_CONSTANTS = PRODUCT_CONSTANTS;
     window.STORAGE_CONSTANTS = STORAGE_CONSTANTS;
+    window.PRODUCT_COLOR_HEX_MAP = PRODUCT_COLOR_HEX_MAP;
 } 
