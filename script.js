@@ -40,8 +40,8 @@ window.addEventListener('scroll', () => {
     const navbarEl = document.querySelector('.navbar');
     if (!navbarEl) return;
 
-    // On product or store pages, keep navbar in final scrolled state
-    if (document.body.classList.contains('pd-page') || document.body.classList.contains('store-page')) {
+    // On product, store, or about pages, keep navbar in final scrolled state
+    if (document.body.classList.contains('pd-page') || document.body.classList.contains('store-page') || document.body.classList.contains('about-page')) {
         navbarEl.style.setProperty('--navbar-bg-opacity', 1);
         navbarEl.classList.add('scrolled');
         return;
@@ -314,8 +314,8 @@ document.addEventListener('allScriptsLoaded', async () => {
     // Initialize navbar background state
     const navEl = document.querySelector('.navbar');
     if (navEl) {
-        if (document.body.classList.contains('pd-page') || document.body.classList.contains('store-page')) {
-            // Force final scrolled style on product/store pages
+        if (document.body.classList.contains('pd-page') || document.body.classList.contains('store-page') || document.body.classList.contains('about-page')) {
+            // Force final scrolled style on product/store/about pages
             navEl.style.setProperty('--navbar-bg-opacity', 1);
             navEl.classList.add('scrolled');
         } else {

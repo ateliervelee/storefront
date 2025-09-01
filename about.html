@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Story - Atelier Veleé</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=5">
+    <style>
+        html, body { height: 100%; }
+        body { display: flex; min-height: 100vh; flex-direction: column; background: #fff; }
+        .about-main { flex: 1 0 auto; }
+        .about-hero { padding: 7rem 0 2.5rem; background: #fff; }
+        .about-container { max-width: none; margin: 0; padding: 0; }
+        .about-hero .about-container { padding: 0 1.25rem; }
+        .about-title { font-family: 'Playfair Display', serif; font-size: 2.75rem; letter-spacing: 0.5px; }
+        .about-sub { color: #6b7280; margin-top: 0.75rem; }
+
+        .about-section { display: grid; grid-template-columns: 1fr; gap: 0; align-items: stretch; margin: 0; }
+        @media (min-width: 768px) { .about-section { grid-template-columns: 1fr 1fr; gap: 0; } }
+        .about-image { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 0; background: #f5f5f5; }
+        .about-image img { width: 100%; height: 100%; object-fit: cover; transform: translateZ(0); will-change: transform; transition: transform 0.25s ease-out; backface-visibility: hidden; }
+        .about-text h3 { font-family: 'Playfair Display', serif; font-size: 1.75rem; margin: 0 0 0.9rem 0; }
+        .about-text p { color: #4b5563; line-height: 1.7; }
+
+        .about-text { margin: 0 1.25rem; }
+        @media (max-width: 767px) { .about-text { margin: 1.25rem; } }
+
+        .about-section:nth-of-type(2) .about-text,
+        .about-section:nth-of-type(3) .about-text { margin-top: 1.25rem; margin-bottom: 1.25rem; }
+
+        /* Parallax: subtle translate on scroll */
+        .parallax { transform: translateY(0); }
+
+        /* Alternate layouts */
+        .reverse { }
+        @media (min-width: 768px) {
+          .about-section.reverse .about-image { grid-column: 2; }
+          .about-section.reverse .about-text { grid-column: 1; }
+        }
+        @media (max-width: 767px) {
+          .about-section.reverse .about-image { grid-row: 1; }
+          .about-section.reverse .about-text { grid-row: 2; }
+        }
+    </style>
+</head>
+<body class="about-page store-page">
+    <header-placeholder></header-placeholder>
+
+    <main class="about-main">
+        <section class="about-hero">
+            <div class="about-container">
+                <h1 class="about-title">Our Story</h1>
+                <p class="about-sub">Pursuing timeless quality, refined fabrics, and considered craftsmanship.</p>
+            </div>
+        </section>
+
+        <section class="about-container">
+            <!-- 1) Mission first (image left, text right) -->
+            <div class="about-section">
+                <div class="about-image parallax" data-speed="0.6"><img src="assets/images/img_dress_2.webp" alt="Mission"></div>
+                <div class="about-text">
+                    <h3>Our Mission</h3>
+                    <p>Marija has always believed that clothing should exist as a celebration of women themselves rather than a reflection of fleeting trends. In today’s world where everything moves faster and the attention to true quality is often lost, she chose to create Atelier Veleé as a place where craftsmanship and dignity are valued above all else, while still remaining within reach at a fair and reasonable price. The mission of the house is both simple and deeply meaningful: to help every woman carry herself with confidence and grace by offering timeless essentials that are carefully designed, thoughtfully produced, and lovingly finished. Through these elevated pieces, Atelier Veleé seeks to remind each woman that elegance is not about extravagance but about feeling at ease in her own skin, supported by clothing that honors her strength, beauty, and individuality.</p>
+                </div>
+            </div>
+
+            <!-- 2) Crafted with Intention (text left, image right) -->
+            <div class="about-section reverse">
+                <div class="about-text">
+                    <h3>Crafted with Intention</h3>
+                    <p>Every creation from Atelier Veleé has its origin in fabric, for we believe that true beauty always begins with the material itself. We take time to source only the most premium textiles, chosen for the way they feel to the touch, the way they fall and drape on the body, and the way they endure through years of wear. Our preference leans toward natural fibers that breathe and age gracefully, as well as refined blends that balance comfort with sophistication, allowing each garment to carry both strength and softness. Once the fabric is chosen, the journey continues in the skilled hands of master artisans. Each piece is sewn with care by expert ateliers in both Istanbul and Italy, two cities with long traditions of craft and an unwavering respect for detail. Their knowledge ensures that every seam is precise, every edge is finished with delicacy, and every garment embodies a sense of quiet elegance that transforms even the simplest moment into something refined and memorable.</p>
+                </div>
+                <div class="about-image parallax" data-speed="0.8"><img src="assets/images/img_dress_1.jpg" alt="Craftsmanship"></div>
+            </div>
+
+            <!-- 3) Merged: Quality Over Noise + Made to Endure (image left, text right) -->
+            <div class="about-section">
+                <div class="about-image parallax" data-speed="0.5"><img src="assets/images/img_dress_3.jpg" alt="Quality & Endurance"></div>
+                <div class="about-text">
+                    <h3>Quality You Can Feel</h3>
+                    <p>As the pace of fast fashion continues to accelerate, the quality of clothing too often disappears, leaving garments that feel disposable rather than cherished. At Atelier Veleé, we seek to restore true meaning to the wardrobe by returning attention to the details that matter most. Construction is treated as a foundation rather than an afterthought, linings are selected so they feel genuinely luxurious against the skin, and silhouettes are carefully shaped to flatter the natural form of the body. Each new release is approached with patience and consideration, never hurried, allowing every piece to express quiet refinement and thoughtful design.</p>
+                    <p>We choose to collaborate with intimate ateliers that share our belief in garments as lifelong companions, clothing that moves with you and remains relevant well beyond a single season. Their dedication allows us to pursue thoughtful pattern cutting that respects proportion, seams that are reinforced to last, and fabrics that are chosen not only for their beauty but also for their resilience. The result is clothing that wears gracefully over time, maintaining elegance even after repeated use. By crafting in this way, we minimize unnecessary waste while preserving the artistry of design, ensuring that longevity and style exist side by side without compromise.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer-placeholder></footer-placeholder>
+
+    <script src="main.js"></script>
+    <script>
+        // Enhanced parallax on scroll (visible, smooth, rAF)
+        (function() {
+            const wrappers = Array.from(document.querySelectorAll('.parallax'));
+            let ticking = false;
+            function update() {
+                ticking = false;
+                const viewportH = window.innerHeight || 800;
+                wrappers.forEach((wrap) => {
+                    const img = wrap.querySelector('img');
+                    if (!img) return;
+                    const speed = parseFloat(wrap.getAttribute('data-speed') || '0.5');
+                    const rect = wrap.getBoundingClientRect();
+                    const progress = (rect.top + rect.height / 2 - viewportH / 2) / viewportH; // -1..1-ish
+                    const translate = Math.max(-80, Math.min(80, -progress * (speed * 160)));
+                    img.style.transform = `translateY(${translate}px)`;
+                });
+            }
+            function onScroll() {
+                if (!ticking) {
+                    ticking = true;
+                    requestAnimationFrame(update);
+                }
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll, { passive: true });
+            update();
+        })();
+    </script>
+</body>
+</html> 
