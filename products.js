@@ -110,6 +110,20 @@ class ProductsManager {
     createProductCard(product) {
         const card = document.createElement('div');
         card.className = 'product-card';
+        try {
+            const minPrice = Math.min(...(product.variants || []).map(v => v.price || 0));
+            const createdMs = (typeof product.createdAt === 'number')
+                ? product.createdAt
+                : (product.createdAt && typeof product.createdAt.toMillis === 'function')
+                    ? product.createdAt.toMillis()
+                    : (product.createdAt && typeof product.createdAt.seconds === 'number')
+                        ? product.createdAt.seconds * 1000
+                        : (product.createdAt && typeof product.createdAt._seconds === 'number')
+                            ? product.createdAt._seconds * 1000
+                            : (product.createdAtMs || (product.createdAtDate ? new Date(product.createdAtDate).getTime() : Date.now()));
+            card.dataset.price = String(isFinite(minPrice) ? minPrice : 0);
+            card.dataset.date = String(createdMs);
+        } catch (e) {}
         
         // Get the smallest size variant for default selection
         const sortedVariants = this.sortVariantsBySize(product.variants);

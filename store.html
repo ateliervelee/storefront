@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store - Atelier Veleé</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=5">
+    <style>
+        .store-hero { padding: 7rem 0 2rem; background: #fff; }
+        .store-title { font-family: 'Playfair Display', serif; font-size: 2.25rem; letter-spacing: 0.5px; }
+        .store-sub { color: #6b7280; margin-top: 0.25rem; }
+        .store-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; gap: 1rem; }
+        .store-meta .showing { color: #6b7280; font-size: 0.95rem; }
+        .store-meta .sort { display: inline-flex; align-items: center; gap: 0.5rem; }
+        .store-meta select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.6rem; padding-right: calc(0.6rem + 8px); background: #fff; }
+        .store-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
+        .store-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+        @media (max-width: 639px) { .store-grid { grid-template-columns: 1fr; } }
+        @media (min-width: 768px) { .store-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1024px) { .store-grid { grid-template-columns: repeat(4, 1fr); } }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin: 2rem 0 3rem; }
+        .page-btn { padding: 0.5rem 0.9rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 8px; cursor: pointer; }
+        .page-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+        .page-num { padding: 0.5rem 0.75rem; min-width: 2.25rem; text-align: center; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; }
+        .page-num.active { background: var(--charcoal); color: var(--warm-white); border-color: var(--charcoal); }
+        html, body { height: 100%; }
+        body { display: flex; min-height: 100vh; flex-direction: column; }
+        .store-main { flex: 1 0 auto; }
+    </style>
+</head>
+<body class="store-page">
+    <header-placeholder></header-placeholder>
+
+    <main class="store-main">
+        <section class="store-hero">
+            <div class="store-container">
+                <h1 class="store-title">Store</h1>
+                <p class="store-sub">Discover the latest pieces in our collection</p>
+                <div class="store-meta">
+                    <div class="showing">showing <span id="storeCount">0</span> products</div>
+                    <label class="sort" for="storeSort">
+                        <span>Sort by</span>
+                        <select id="storeSort">
+                            <option value="date_desc">Newest</option>
+                            <option value="date_asc">Oldest</option>
+                            <option value="price_asc">Price: Low to High</option>
+                            <option value="price_desc">Price: High to Low</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <section class="store-products">
+            <div class="store-container">
+                <div class="store-grid" id="productsGrid">
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                    <div class="product-skeleton"></div>
+                </div>
+                <div class="pagination" id="pagination" aria-label="Pagination">
+                    <div id="pageNumbers" class="page-numbers"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer-placeholder></footer-placeholder>
+
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('allScriptsLoaded', () => {
+            // After standard ProductsManager renders, apply pagination if present
+            const grid = document.getElementById('productsGrid');
+            const pager = document.getElementById('pagination');
+            const sortSel = document.getElementById('storeSort');
+            const countEl = document.getElementById('storeCount');
+            if (!grid || !pager) return;
+
+            const PAGE_SIZE = 16; // 4x4 desktop
+            let currentPage = 1;
+            let cards = [];
+            let observer;
+            let isSorting = false;
+            let scheduled = false;
+
+            const collect = () => { cards = Array.from(grid.querySelectorAll('.product-card')); };
+            const totalPages = () => Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
+
+            function updateCount() {
+                if (countEl) countEl.textContent = String(cards.length);
+            }
+
+            function applySort() {
+                if (!sortSel || cards.length < 2) return;
+                const value = sortSel.value;
+                const sorted = [...cards].sort((a, b) => {
+                    const pa = Number(a.dataset.price || 0);
+                    const pb = Number(b.dataset.price || 0);
+                    const da = Number(a.dataset.date || 0);
+                    const db = Number(b.dataset.date || 0);
+                    switch (value) {
+                        case 'price_asc': return pa - pb;
+                        case 'price_desc': return pb - pa;
+                        case 'date_asc': return da - db;
+                        case 'date_desc':
+                        default: return db - da;
+                    }
+                });
+                isSorting = true;
+                if (observer) observer.disconnect();
+                const frag = document.createDocumentFragment();
+                sorted.forEach(el => frag.appendChild(el));
+                grid.appendChild(frag);
+                isSorting = false;
+                if (observer) observer.observe(grid, { childList: true });
+                collect();
+            }
+
+            const renderPage = () => {
+                const total = totalPages();
+                pager.style.display = '';
+                cards.forEach((el, idx) => {
+                    const pageIdx = Math.floor(idx / PAGE_SIZE) + 1;
+                    el.style.display = pageIdx === currentPage ? '' : 'none';
+                });
+                updatePager();
+                updateCount();
+            };
+
+            const scheduleUpdate = () => {
+                if (scheduled) return;
+                scheduled = true;
+                requestAnimationFrame(() => {
+                    scheduled = false;
+                    collect();
+                    applySort();
+                    renderPage();
+                });
+            };
+
+            const updatePager = () => {
+                const total = totalPages();
+                const nums = document.getElementById('pageNumbers');
+                nums.innerHTML = '';
+                for (let i = 1; i <= total; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'page-num' + (i === currentPage ? ' active' : '');
+                    btn.textContent = i;
+                    btn.addEventListener('click', () => { currentPage = i; renderPage(); });
+                    nums.appendChild(btn);
+                }
+            };
+
+            const init = () => {
+                collect();
+                applySort();
+                renderPage();
+            };
+
+            if (sortSel) {
+                sortSel.addEventListener('change', () => {
+                    applySort();
+                    currentPage = 1;
+                    renderPage();
+                });
+            }
+
+            // Re-init after ProductsManager finishes rendering
+            observer = new MutationObserver(() => {
+                if (isSorting) return;
+                scheduleUpdate();
+            });
+            observer.observe(grid, { childList: true });
+
+            // Initial attempt in case cards already exist
+            setTimeout(init, 300);
+        });
+    </script>
+</body>
+</html> 
