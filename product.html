@@ -35,6 +35,12 @@
         .pd-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease; }
         .pd-thumb:hover img { transform: scale(1.02); }
         .pd-thumb.selected img { filter: grayscale(1); opacity: 0.65; }
+        /* Breadcrumb */
+        .pd-breadcrumb { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto; font-size: 0.875rem; color: #6b7280; display: flex; gap: 0.5rem; align-items: center; margin: 0 0 1rem 0; }
+        .pd-breadcrumb a { color: #6b7280; text-decoration: none; }
+        .pd-breadcrumb a:hover { text-decoration: underline; }
+        .pd-breadcrumb span { color: #9ca3af; }
+        @media (max-width: 767px) { .pd-grid { grid-template-columns: 1fr !important; gap: 1.25rem !important; } #productDescription + div { max-width: none !important; width: 100%; } #addToCartBtn { width: 100%; } }
     </style>
 </head>
 <body class="pd-page">
@@ -43,7 +49,8 @@
 
     <!-- Product Detail Content -->
     <main style="max-width: 1200px; margin: 0 auto; padding: 6rem 2rem 3rem;">
-        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 3rem; align-items: start;">
+
+        <div class="pd-grid" style="display: grid; grid-template-columns: 3fr 1fr; gap: 3rem; align-items: start;">
             <div>
                 <div style="width: 100%; aspect-ratio: 3/4; background: var(--light-grey, #f5f5f5); border-radius: 12px; overflow: hidden;">
                     <img id="pdMainImage" src="" alt="" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 250ms ease; opacity: 1;">
@@ -51,8 +58,17 @@
                 <div id="pdThumbGrid" class="pd-thumb-grid"></div>
             </div>
             <div>
+                <nav class="pd-breadcrumb" aria-label="Breadcrumb">
+                    <a href="index.html">Home</a>
+                    <span>/</span>
+                    <a href="store.html">Store</a>
+                    <span>/</span>
+                    <span id="pdBreadcrumbCategory">Category</span>
+                </nav>
                 <h1 id="productName" style="font-family: 'Playfair Display', serif; font-size: 2.25rem; color: var(--charcoal, #2b2b2b); margin: 0 0 0.5rem 0;">Loading…</h1>
                 <div id="productPrice" style="font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto; font-size: 1.25rem; color: var(--charcoal, #2b2b2b); margin-bottom: 1.25rem;">—</div>
+
+                <div id="productDescription" style="font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto; font-size: 0.95rem; line-height: 1.7; color: #4b5563; margin: 0 0 1.25rem 0; display: none;"></div>
 
                 <div style="display: grid; gap: 1rem; max-width: 420px;">
                     <div style="display: grid; gap: 0.25rem;">
@@ -104,12 +120,16 @@
         window.pdState = { product: null, variants: [], selectedVariant: null, selectedColor: null, selectedSize: null, selectedImageIndex: 0 };
 
         document.addEventListener('allScriptsLoaded', async () => {
+            const catEl = document.getElementById('pdBreadcrumbCategory');
+            const setCategory = (c) => { if (catEl) catEl.textContent = c || 'Product'; };
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
+            const slugParam = params.get('slug');
             const skuParam = params.get('sku');
 
             const nameEl = document.getElementById('productName');
             const priceEl = document.getElementById('productPrice');
+            const descEl = document.getElementById('productDescription');
             const imgEl = document.getElementById('pdMainImage');
             const colorRow = document.getElementById('colorSwatches');
             const sizeRow = document.getElementById('sizeSwatches');
@@ -119,6 +139,7 @@
 
             const setName = (n) => { if (nameEl) nameEl.textContent = n || 'Product'; };
             const setPrice = (p, c) => { if (priceEl) priceEl.textContent = pdFormatPrice((p ?? 0), c || 'EUR'); };
+            const setDesc = (d) => { if (descEl) { if (d) { descEl.textContent = d; descEl.style.display = ''; } else { descEl.style.display = 'none'; } } };
             const setImage = (src, alt) => { if (imgEl) { imgEl.style.opacity = '1'; imgEl.src = src || ''; imgEl.alt = alt || ''; } };
             function crossfadeMainImage(newIdx, product) {
                 if (!imgEl || !product?.images) return;
@@ -292,7 +313,9 @@
             // 1) Try sessionStorage hydration for instant render
             let snapshot = null;
             try {
-                if (skuParam && sessionStorage.getItem(`pd:sku:${skuParam}`)) {
+                if (slugParam && sessionStorage.getItem(`pd:slug:${slugParam}`)) {
+                    snapshot = JSON.parse(sessionStorage.getItem(`pd:slug:${slugParam}`));
+                } else if (skuParam && sessionStorage.getItem(`pd:sku:${skuParam}`)) {
                     snapshot = JSON.parse(sessionStorage.getItem(`pd:sku:${skuParam}`));
                 } else if (productId && sessionStorage.getItem(`pd:id:${productId}`)) {
                     snapshot = JSON.parse(sessionStorage.getItem(`pd:id:${productId}`));
@@ -306,6 +329,8 @@
                 window.pdState.product = product;
                 window.pdState.variants = product.variants || [];
                 setName(product.name);
+                setCategory(product.category || product.type || product.collection || 'Product');
+                setDesc(product.description || product.details || '');
                 setImage(pdImageUrl(product.images?.[0]), product.name || '');
                 window.pdState.selectedImageIndex = 0;
                 renderThumbGrid(product);
@@ -340,22 +365,30 @@
                 if (addBtn) { addBtn.textContent = addBtn.disabled ? 'Sold out' : 'Add to cart'; }
             }
 
-            // 2) Optional: refresh from Firestore if we have an explicit product id
-            if (productId && window.firebaseServices && window.firebaseServices.db) {
+            // 2) Optional: refresh from Firestore if we have explicit product id or slug
+            if ((productId || slugParam) && window.firebaseServices && window.firebaseServices.db) {
                 try {
                     const db = window.firebaseServices.db;
-                    const doc = await db.collection('products').doc(productId).get();
-                    if (doc.exists) {
-                        const data = doc.data() || {};
-                        const product = { id: productId, ...data };
-
-                        // Fetch variants subcollection
-                        const variantsSnap = await db.collection('products').doc(productId).collection('variants').get();
+                    let product = null;
+                    if (productId) {
+                        const doc = await db.collection('products').doc(productId).get();
+                        if (doc.exists) { product = { id: productId, ...(doc.data() || {}) }; }
+                    } else if (slugParam) {
+                        const q = await db.collection('products').where('slug', '==', slugParam).limit(1).get();
+                        if (!q.empty) {
+                            const d = q.docs[0];
+                            product = { id: d.id, ...(d.data() || {}) };
+                        }
+                    }
+                    if (product) {
+                        const variantsSnap = await db.collection('products').doc(product.id).collection('variants').get();
                         product.variants = variantsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                         window.pdState.product = product;
                         window.pdState.variants = product.variants || [];
                         setName(product.name);
+                        setCategory(product.category || product.type || product.collection || 'Product');
+                        setDesc(product.description || product.details || '');
                         setImage(pdImageUrl(product.images?.[0]), product.name || '');
                         window.pdState.selectedImageIndex = 0;
                         renderThumbGrid(product);
@@ -364,7 +397,6 @@
                         renderColorSwatches(product);
                         renderSizeSwatches(product);
 
-                        // Choose best initial variant again (respect current selections)
                         const size = window.pdState.selectedSize || product.variants?.[0]?.size || '';
                         const color = window.pdState.selectedColor || product.variants?.[0]?.color || '';
                         const refreshed = findVariant(product, size, color);
@@ -376,7 +408,8 @@
                         try {
                             const selectedSku = (refreshed && (refreshed.sku || refreshed.variantSku || refreshed.id)) || null;
                             const snap = { product, selectedVariantId: refreshed?.id || null, selectedSku, savedAt: Date.now() };
-                            sessionStorage.setItem(`pd:id:${productId}`, JSON.stringify(snap));
+                            if (product.id) sessionStorage.setItem(`pd:id:${product.id}`, JSON.stringify(snap));
+                            if (product.slug) sessionStorage.setItem(`pd:slug:${product.slug}`, JSON.stringify(snap));
                             sessionStorage.setItem('pd:last', JSON.stringify(snap));
                             if (selectedSku) sessionStorage.setItem(`pd:sku:${selectedSku}`, JSON.stringify(snap));
                         } catch (e) {}

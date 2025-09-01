@@ -195,7 +195,7 @@ class ProductsManager {
             this.handleAddToCart(product, card);
         });
 
-        // Navigate to product detail with preselected variant SKU
+        // Navigate to product detail using product slug (fallback to id)
         const imageContainer = card.querySelector('.product-image-container');
         if (imageContainer) {
             imageContainer.style.cursor = 'pointer';
@@ -204,6 +204,7 @@ class ProductsManager {
                 const selectedSize = selectedSizeEl ? selectedSizeEl.dataset.size : (availableSizes[0] || null);
                 const selectedVariant = selectedSize ? (product.variants.find(v => v.size === selectedSize) || product.variants[0]) : product.variants[0];
                 const sku = (selectedVariant && (selectedVariant.sku || selectedVariant.variantSku || selectedVariant.id)) || '';
+                const slug = product.slug || product.handle || null;
 
                 // Store full product snapshot in session for instant hydration
                 try {
@@ -218,6 +219,9 @@ class ProductsManager {
                     if (product && product.id) {
                         sessionStorage.setItem(`pd:id:${product.id}`, JSON.stringify(snapshot));
                     }
+                    if (slug) {
+                        sessionStorage.setItem(`pd:slug:${slug}`, JSON.stringify(snapshot));
+                    }
                     if (sku) {
                         sessionStorage.setItem(`pd:sku:${sku}`, JSON.stringify(snapshot));
                     }
@@ -225,7 +229,7 @@ class ProductsManager {
                     // ignore storage errors
                 }
 
-                const url = sku ? `product.html?sku=${encodeURIComponent(sku)}` : `product.html`;
+                const url = slug ? `product.html?slug=${encodeURIComponent(slug)}` : (product.id ? `product.html?id=${encodeURIComponent(product.id)}` : `product.html`);
                 window.location.href = url;
             });
         }
