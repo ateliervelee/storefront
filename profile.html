@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account • Atelier Veleé</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body.profile-page { background: #fff; }
+        .profile-main { max-width: 1100px; margin: 0 auto; padding: 7rem 1.25rem 3rem; }
+        .profile-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .profile-header img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+        .profile-title { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0; color: #222; }
+        .profile-sub { color: #6b7280; margin: 0.25rem 0 0 0; }
+        .orders-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; background: #fff; }
+        .orders-title { font-weight: 600; margin: 0 0 0.75rem 0; }
+        .orders-empty { color: #6b7280; }
+        .orders-list { display: grid; gap: 0.75rem; }
+        .order-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem; }
+        .order-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .order-num { font-weight: 600; }
+        .order-status { font-size: 0.875rem; color: #6b7280; }
+        .order-total { font-weight: 600; }
+        /* New: profile actions */
+        .profile-actions { margin-top: 0.5rem; }
+        .signout-btn { background: #fff; color: #111; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer; }
+        .signout-btn:hover { background: #f7f7f7; }
+    </style>
+</head>
+<body class="profile-page store-page">
+    <header-placeholder></header-placeholder>
+
+    <main class="profile-main">
+        <section class="profile-header">
+            <img id="pfAvatar" alt="User" style="display:none;">
+            <div>
+                <h1 class="profile-title" id="pfTitle">My Account</h1>
+                <p class="profile-sub" id="pfSub"></p>
+                <div class="profile-actions">
+                    <button id="pfSignOutBtn" class="signout-btn" type="button">Sign out</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="orders-card">
+            <h2 class="orders-title">Your Orders</h2>
+            <div id="ordersContainer">
+                <p class="orders-empty" id="ordersEmpty">Loading your orders…</p>
+                <div class="orders-list" id="ordersList" style="display:none;"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer-placeholder></footer-placeholder>
+
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('allScriptsLoaded', async () => {
+            const PROFILE_KEY = 'av:profile';
+            const readCachedProfile = () => { try { return JSON.parse(sessionStorage.getItem(PROFILE_KEY) || 'null'); } catch { return null; } };
+            const writeCachedProfile = (profile) => { try { profile ? sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile)) : sessionStorage.removeItem(PROFILE_KEY); } catch {} };
+            const prof = readCachedProfile();
+            if (!prof) {
+                window.location.replace('signup.html');
+                return;
+            }
+
+            // Force scrolled header style
+            const navCheck = () => {
+                const navEl = document.querySelector('.navbar');
+                if (navEl) { navEl.style.setProperty('--navbar-bg-opacity', 1); navEl.classList.add('scrolled'); }
+            };
+            navCheck();
+
+            // Populate header section
+            const titleEl = document.getElementById('pfTitle');
+            const subEl = document.getElementById('pfSub');
+            const avatarEl = document.getElementById('pfAvatar');
+            if (titleEl) titleEl.textContent = prof.displayName ? `Welcome, ${prof.displayName}` : 'My Account';
+            if (subEl) subEl.textContent = prof.email || '';
+            if (avatarEl) {
+                if (prof.photoURL) { avatarEl.src = prof.photoURL; avatarEl.style.display = ''; }
+                else { avatarEl.style.display = 'none'; }
+            }
+
+            // Sign out handler
+            try {
+                const btn = document.getElementById('pfSignOutBtn');
+                const services = window.firebaseServices || {};
+                const auth = services.auth;
+                if (btn) {
+                    btn.addEventListener('click', async () => {
+                        try { if (auth && auth.signOut) await auth.signOut(); } catch (e) { console.warn('Sign out error (ignored):', e); }
+                        writeCachedProfile(null);
+                        window.location.replace('signup.html');
+                    });
+                }
+            } catch {}
+
+            // Load orders for this user (query by uid and email, sort client-side)
+            try {
+                const services = window.firebaseServices || {};
+                const db = services.db;
+                if (!db) throw new Error('Firestore not available');
+
+                const listEl = document.getElementById('ordersList');
+                const emptyEl = document.getElementById('ordersEmpty');
+
+                const resultsMap = new Map();
+                const tryFetch = async (query) => {
+                    try { return await query.get(); } catch (e) { console.warn('Orders query failed:', e); return null; }
+                };
+
+                const byUidSnap = prof.uid ? await tryFetch(db.collection('orders').where('customerId', '==', prof.uid)) : null;
+                if (byUidSnap && !byUidSnap.empty) {
+                    byUidSnap.docs.forEach(d => resultsMap.set(d.id, d));
+                }
+
+                if (prof.email) {
+                    const byEmailSnap = await tryFetch(db.collection('orders').where('customer.email', '==', prof.email));
+                    if (byEmailSnap && !byEmailSnap.empty) {
+                        byEmailSnap.docs.forEach(d => resultsMap.set(d.id, d));
+                    }
+                }
+
+                const docs = Array.from(resultsMap.values());
+                if (docs.length > 0) {
+                    const rows = docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
+                    const toMs = (v) => {
+                        if (!v) return 0;
+                        if (typeof v === 'number') return v;
+                        if (v.seconds) return v.seconds * 1000 + (v.nanoseconds ? Math.floor(v.nanoseconds / 1e6) : 0);
+                        return 0;
+                    };
+                    rows.sort((a, b) => toMs(b.data.createdAt) - toMs(a.data.createdAt));
+
+                    if (emptyEl) emptyEl.style.display = 'none';
+                    if (listEl) listEl.innerHTML = '';
+                    if (listEl) listEl.style.display = '';
+
+                    rows.forEach(({ id, data }) => {
+                        const num = data.orderNumber || id;
+                        const status = data.status || 'created';
+                        const totalCents = data.totalAmount || data.total || 0;
+                        const currency = (data.currency || 'EUR').toUpperCase();
+                        const total = (totalCents / 100).toLocaleString(undefined, { style: 'currency', currency });
+                        const row = document.createElement('div');
+                        row.className = 'order-row';
+                        row.innerHTML = `
+                            <div>
+                                <div class="order-num">Order #${num}</div>
+                                <div class="order-status">${status}</div>
+                            </div>
+                            <div class="order-total">${total}</div>
+                            <a href="thank-you.html?order=${encodeURIComponent(num)}" style="text-decoration:none;color:#111;">View</a>
+                        `;
+                        listEl.appendChild(row);
+                    });
+                } else {
+                    if (emptyEl) { emptyEl.textContent = 'No orders yet.'; emptyEl.style.display = ''; }
+                }
+            } catch (err) {
+                const emptyEl = document.getElementById('ordersEmpty');
+                if (emptyEl) emptyEl.textContent = 'Unable to load orders right now.';
+                console.error('Error loading orders:', err);
+            }
+        });
+    </script>
+</body>
+</html> 

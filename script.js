@@ -379,6 +379,16 @@ document.addEventListener('allScriptsLoaded', async () => {
                 }
             });
         }
+
+        // Account icon routing: go to profile if cached, else signup
+        const accountIcon = document.getElementById('accountIcon');
+        if (accountIcon) {
+            accountIcon.addEventListener('click', (e) => {
+                e.preventDefault();
+                const prof = readCachedProfile();
+                window.location.href = prof ? 'profile.html' : 'signup.html';
+            });
+        }
     } catch (e) {}
 
     // Load footer component
