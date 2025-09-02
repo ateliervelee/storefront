@@ -329,6 +329,58 @@ document.addEventListener('allScriptsLoaded', async () => {
         }
     }
 
+    // Account avatar state with session cache for instant paint
+    try {
+        const PROFILE_KEY = 'av:profile';
+        const auth = window.firebaseServices && window.firebaseServices.auth;
+        const avatarImg = document.getElementById('accountAvatar');
+        const avatarFallback = document.getElementById('accountFallbackIcon');
+
+        const readCachedProfile = () => {
+            try { return JSON.parse(sessionStorage.getItem(PROFILE_KEY) || 'null'); } catch { return null; }
+        };
+        const writeCachedProfile = (profile) => {
+            try {
+                if (profile) sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+                else sessionStorage.removeItem(PROFILE_KEY);
+            } catch {}
+        };
+        const applyAvatar = (profile) => {
+            if (!avatarImg || !avatarFallback) return;
+            const url = profile && profile.photoURL ? profile.photoURL : '';
+            if (url) {
+                avatarImg.src = url;
+                avatarImg.style.display = '';
+                avatarFallback.style.display = 'none';
+            } else {
+                avatarImg.style.display = 'none';
+                avatarFallback.style.display = '';
+            }
+        };
+
+        // Hydrate immediately from cache after header is injected
+        const cached = readCachedProfile();
+        if (cached) applyAvatar(cached);
+
+        if (auth && (avatarImg || avatarFallback)) {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    const profile = {
+                        uid: user.uid || '',
+                        displayName: user.displayName || '',
+                        email: user.email || '',
+                        photoURL: user.photoURL || ''
+                    };
+                    writeCachedProfile(profile);
+                    applyAvatar(profile);
+                } else {
+                    writeCachedProfile(null);
+                    applyAvatar(null);
+                }
+            });
+        }
+    } catch (e) {}
+
     // Load footer component
     await loadComponent('footer.html', 'footer-placeholder');
 

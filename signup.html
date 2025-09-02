@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account • Atelier Veleé</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body.auth-page { background: #fff; overflow-y: auto; }
+        .auth-main { max-width: 960px; margin: 0 auto; padding: 10rem 1.25rem 4rem; }
+        .auth-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 480px)); gap: 2rem; align-items: start; justify-content: center; }
+        @media (max-width: 767px) { .auth-grid { grid-template-columns: 1fr; gap: 1.25rem; justify-items: center; } .auth-main { padding-bottom: 4rem; } }
+        .auth-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.25rem; background: #fff; width: 100%; max-width: 480px; }
+        .auth-title { font-family: 'Playfair Display', serif; font-size: 1.75rem; margin: 0 0 0.75rem 0; color: #222; }
+        .auth-sub { color: #6b7280; margin: 0 0 1rem 0; }
+        .auth-form { display: grid; gap: 0.75rem; }
+        .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        @media (max-width: 767px) { .auth-row { grid-template-columns: 1fr; } }
+        .auth-form label { font-size: 0.85rem; color: #374151; }
+        .auth-input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-family: 'Inter', system-ui; }
+        .auth-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid #222; background: #222; color: #fff; font-weight: 500; cursor: pointer; transition: background 0.2s ease; }
+        .auth-btn:hover { background: #111; }
+        .auth-btn.secondary { background: #fff; color: #222; border-color: #e5e7eb; }
+        .auth-btn.secondary:hover { background: #f7f7f7; }
+        .auth-sep { text-align: center; color: #9ca3af; font-size: 0.85rem; margin: 0.25rem 0; }
+        .auth-link { display: inline-block; margin-top: 0.5rem; color: #374151; font-size: 0.9rem; text-decoration: none; }
+        .auth-link:hover { text-decoration: underline; }
+        .auth-error { color: #b91c1c; font-size: 0.85rem; min-height: 1.1rem; }
+
+        #signinCard .auth-form { margin-top: 2rem; }
+    </style>
+</head>
+<body class="auth-page store-page">
+    <header-placeholder></header-placeholder>
+
+    <main class="auth-main">
+        <div class="auth-grid">
+            <section class="auth-card" id="signinCard">
+                <h1 class="auth-title">Welcome back</h1>
+                <p class="auth-sub">Sign in to continue</p>
+                <form class="auth-form" id="signinForm">
+                    <div>
+                        <label for="siEmail">Email</label>
+                        <input id="siEmail" type="email" class="auth-input" autocomplete="email" required>
+                    </div>
+                    <div>
+                        <label for="siPassword">Password</label>
+                        <input id="siPassword" type="password" class="auth-input" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="auth-btn" id="emailSignInBtn">Sign in</button>
+                    <div class="auth-sep">or</div>
+                    <button type="button" class="auth-btn secondary" id="googleSignInBtn">
+                        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12 c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.082,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20 s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.188l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.551,5.046C9.48,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.093,5.574c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C36.971,39.166,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                        Sign in with Google
+                    </button>
+                    <div class="auth-error" id="signinError"></div>
+                    <a href="#" class="auth-link" id="showSignupLink">or create an account</a>
+                </form>
+            </section>
+
+            <section class="auth-card" id="signupCard" style="display:none;">
+                <h2 class="auth-title">Create your account</h2>
+                <p class="auth-sub">Join Atelier Veleé</p>
+                <form class="auth-form" id="signupForm">
+                    <div class="auth-row">
+                        <div>
+                            <label for="suFirst">First name</label>
+                            <input id="suFirst" type="text" class="auth-input" autocomplete="given-name" required>
+                        </div>
+                        <div>
+                            <label for="suLast">Last name</label>
+                            <input id="suLast" type="text" class="auth-input" autocomplete="family-name" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="suEmail">Email</label>
+                        <input id="suEmail" type="email" class="auth-input" autocomplete="email" required>
+                    </div>
+                    <div>
+                        <label for="suPassword">Password</label>
+                        <input id="suPassword" type="password" class="auth-input" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" class="auth-btn" id="emailSignupBtn">Create account</button>
+                    <div class="auth-sep">or</div>
+                    <button type="button" class="auth-btn secondary" id="googleSignupBtn">
+                        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12 c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.082,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20 s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.188l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.551,5.046C9.48,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.093,5.574c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C36.971,39.166,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                        Sign up with Google
+                    </button>
+                    <div class="auth-error" id="signupError"></div>
+                    <a href="#" class="auth-link" id="showSigninLink">or sign in</a>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <footer-placeholder></footer-placeholder>
+
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('allScriptsLoaded', () => {
+            const signinCard = document.getElementById('signinCard');
+            const signupCard = document.getElementById('signupCard');
+            const showSignupLink = document.getElementById('showSignupLink');
+            const showSigninLink = document.getElementById('showSigninLink');
+            const signinForm = document.getElementById('signinForm');
+            const signupForm = document.getElementById('signupForm');
+            const signinError = document.getElementById('signinError');
+            const signupError = document.getElementById('signupError');
+
+            function show(view) {
+                if (view === 'signup') { signupCard.style.display = ''; signinCard.style.display = 'none'; }
+                else { signinCard.style.display = ''; signupCard.style.display = 'none'; }
+            }
+            showSignupLink.addEventListener('click', (e) => { e.preventDefault(); show('signup'); });
+            showSigninLink.addEventListener('click', (e) => { e.preventDefault(); show('signin'); });
+
+            const auth = window.firebaseServices && window.firebaseServices.auth;
+            if (!auth) return;
+
+            // Google Provider (popup)
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            document.getElementById('googleSignInBtn').addEventListener('click', async () => {
+                signinError.textContent = '';
+                try {
+                    await auth.signInWithPopup(provider);
+                    window.location.href = 'index.html';
+                } catch (err) {
+                    signinError.textContent = err && err.message ? err.message : 'Google sign-in failed';
+                }
+            });
+
+            document.getElementById('googleSignupBtn').addEventListener('click', async () => {
+                signupError.textContent = '';
+                try {
+                    await auth.signInWithPopup(provider);
+                    window.location.href = 'index.html';
+                } catch (err) {
+                    signupError.textContent = err && err.message ? err.message : 'Google sign-up failed';
+                }
+            });
+
+            // Email/password sign in
+            signinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                signinError.textContent = '';
+                const email = document.getElementById('siEmail').value.trim();
+                const password = document.getElementById('siPassword').value;
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    window.location.href = 'index.html';
+                } catch (err) {
+                    signinError.textContent = err && err.message ? err.message : 'Sign in failed';
+                }
+            });
+
+            // Email/password sign up
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                signupError.textContent = '';
+                const first = document.getElementById('suFirst').value.trim();
+                const last = document.getElementById('suLast').value.trim();
+                const email = document.getElementById('suEmail').value.trim();
+                const password = document.getElementById('suPassword').value;
+                try {
+                    const cred = await auth.createUserWithEmailAndPassword(email, password);
+                    if (cred && cred.user) {
+                        await cred.user.updateProfile({ displayName: `${first} ${last}`.trim() });
+                    }
+                    window.location.href = 'index.html';
+                } catch (err) {
+                    signupError.textContent = err && err.message ? err.message : 'Sign up failed';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
