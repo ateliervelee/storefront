@@ -469,6 +469,20 @@ document.addEventListener('allScriptsLoaded', async () => {
                 window.location.href = prof ? 'profile.html' : 'signup.html';
             });
         }
+
+        // Contact link routing: scroll on homepage, open contact.html elsewhere
+        try {
+            const contactLinks = Array.from(document.querySelectorAll('a.nav-link[href="#contact"], a.mobile-link[href="#contact"]'));
+            contactLinks.forEach((link) => {
+                link.addEventListener('click', (e) => {
+                    const hasContactAnchor = !!document.getElementById('contact');
+                    if (!hasContactAnchor) {
+                        e.preventDefault();
+                        window.location.href = 'contact.html';
+                    }
+                });
+            });
+        } catch {}
     } catch (e) {}
 
     // Load footer component
