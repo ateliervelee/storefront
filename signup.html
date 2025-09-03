@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account • Atelier Veleé</title>
-    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
-    <link rel="manifest" href="assets/favicon/site.webmanifest">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <style>
         body.auth-page { background: #fff; overflow-y: auto; }
@@ -32,7 +27,6 @@
         .auth-link { display: inline-block; margin-top: 0.5rem; color: #374151; font-size: 0.9rem; text-decoration: none; }
         .auth-link:hover { text-decoration: underline; }
         .auth-error { color: #b91c1c; font-size: 0.85rem; min-height: 1.1rem; }
-
         #signinCard .auth-form { margin-top: 2rem; }
     </style>
 </head>
@@ -56,7 +50,7 @@
                     <button type="submit" class="auth-btn" id="emailSignInBtn">Sign in</button>
                     <div class="auth-sep">or</div>
                     <button type="button" class="auth-btn secondary" id="googleSignInBtn">
-                        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12 c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.082,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20 s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.188l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.551,5.046C9.48,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.093,5.574c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C36.971,39.166,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12 c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.188l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.551,5.046C9.48,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.093,5.574c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C36.971,39.166,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
                         Sign in with Google
                     </button>
                     <div class="auth-error" id="signinError"></div>
@@ -89,7 +83,7 @@
                     <button type="submit" class="auth-btn" id="emailSignupBtn">Create account</button>
                     <div class="auth-sep">or</div>
                     <button type="button" class="auth-btn secondary" id="googleSignupBtn">
-                        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12 c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.082,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20 s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.188l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.551,5.046C9.48,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.093,5.574c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C36.971,39.166,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12 c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.64,6.053,29.082,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.188l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.551,5.046C9.48,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.093,5.574c0.001-0.001,0.002-0.001,0.003-0.002 l6.19,5.238C36.971,39.166,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
                         Sign up with Google
                     </button>
                     <div class="auth-error" id="signupError"></div>
@@ -104,79 +98,118 @@
     <script src="main.js"></script>
     <script>
         document.addEventListener('allScriptsLoaded', () => {
-            const signinCard = document.getElementById('signinCard');
-            const signupCard = document.getElementById('signupCard');
-            const showSignupLink = document.getElementById('showSignupLink');
-            const showSigninLink = document.getElementById('showSigninLink');
+            const services = window.firebaseServices || {};
+            const auth = services.auth;
+            const db = services.db;
+            if (!auth) return;
+
+            const PROFILE_KEY = 'av:profile';
+            const cacheProfile = (u) => {
+                try {
+                    const p = u ? { uid: u.uid || '', displayName: u.displayName || '', email: u.email || '', photoURL: u.photoURL || '' } : null;
+                    if (p) sessionStorage.setItem(PROFILE_KEY, JSON.stringify(p)); else sessionStorage.removeItem(PROFILE_KEY);
+                } catch {}
+            };
+            const upsertUserDoc = async (u, extra = {}) => {
+                try {
+                    if (!db || !u) return;
+                    const ref = db.collection('users').doc(u.uid);
+                    const providerIds = (u.providerData || []).map(p => p && p.providerId).filter(Boolean);
+                    const payload = {
+                        uid: u.uid,
+                        email: u.email || '',
+                        displayName: u.displayName || '',
+                        photoURL: u.photoURL || '',
+                        providerIds,
+                        ...extra,
+                        updatedAt: new Date()
+                    };
+                    await ref.set({ createdAt: new Date(), ...payload }, { merge: true });
+                } catch (e) { console.warn('User doc upsert failed:', e); }
+            };
+            const postAuth = async (user) => {
+                cacheProfile(user);
+                await upsertUserDoc(user);
+                window.location.replace('profile.html');
+            };
+            const setError = (el, msg) => { if (el) el.textContent = msg || ''; };
+
+            // Elements
             const signinForm = document.getElementById('signinForm');
             const signupForm = document.getElementById('signupForm');
             const signinError = document.getElementById('signinError');
             const signupError = document.getElementById('signupError');
+            const showSignupLink = document.getElementById('showSignupLink');
+            const showSigninLink = document.getElementById('showSigninLink');
+            const signinCard = document.getElementById('signinCard');
+            const signupCard = document.getElementById('signupCard');
 
-            function show(view) {
-                if (view === 'signup') { signupCard.style.display = ''; signinCard.style.display = 'none'; }
-                else { signinCard.style.display = ''; signupCard.style.display = 'none'; }
-            }
-            showSignupLink.addEventListener('click', (e) => { e.preventDefault(); show('signup'); });
-            showSigninLink.addEventListener('click', (e) => { e.preventDefault(); show('signin'); });
+            // Toggle
+            if (showSignupLink) showSignupLink.addEventListener('click', (e) => { e.preventDefault(); signinCard.style.display = 'none'; signupCard.style.display = ''; setError(signinError, ''); });
+            if (showSigninLink) showSigninLink.addEventListener('click', (e) => { e.preventDefault(); signupCard.style.display = 'none'; signinCard.style.display = ''; setError(signupError, ''); });
 
-            const auth = window.firebaseServices && window.firebaseServices.auth;
-            if (!auth) return;
-
-            // Google Provider (popup)
-            const provider = new firebase.auth.GoogleAuthProvider();
-
-            document.getElementById('googleSignInBtn').addEventListener('click', async () => {
-                signinError.textContent = '';
-                try {
-                    await auth.signInWithPopup(provider);
-                    window.location.href = 'index.html';
-                } catch (err) {
-                    signinError.textContent = err && err.message ? err.message : 'Google sign-in failed';
-                }
-            });
-
-            document.getElementById('googleSignupBtn').addEventListener('click', async () => {
-                signupError.textContent = '';
-                try {
-                    await auth.signInWithPopup(provider);
-                    window.location.href = 'index.html';
-                } catch (err) {
-                    signupError.textContent = err && err.message ? err.message : 'Google sign-up failed';
-                }
-            });
-
-            // Email/password sign in
-            signinForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                signinError.textContent = '';
+            // Email sign in
+            if (signinForm) signinForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); setError(signinError, '');
                 const email = document.getElementById('siEmail').value.trim();
                 const password = document.getElementById('siPassword').value;
                 try {
-                    await auth.signInWithEmailAndPassword(email, password);
-                    window.location.href = 'index.html';
+                    const cred = await auth.signInWithEmailAndPassword(email, password);
+                    await postAuth(cred.user);
                 } catch (err) {
-                    signinError.textContent = err && err.message ? err.message : 'Sign in failed';
+                    if (err && err.code === 'auth/wrong-password') setError(signinError, 'Incorrect password.');
+                    else if (err && err.code === 'auth/user-not-found') setError(signinError, 'No account found for this email.');
+                    else if (err && err.code === 'auth/too-many-requests') setError(signinError, 'Too many attempts. Try again later.');
+                    else setError(signinError, 'Sign in failed.');
                 }
             });
 
-            // Email/password sign up
-            signupForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                signupError.textContent = '';
+            // Email sign up
+            if (signupForm) signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); setError(signupError, '');
                 const first = document.getElementById('suFirst').value.trim();
                 const last = document.getElementById('suLast').value.trim();
                 const email = document.getElementById('suEmail').value.trim();
                 const password = document.getElementById('suPassword').value;
                 try {
                     const cred = await auth.createUserWithEmailAndPassword(email, password);
-                    if (cred && cred.user) {
-                        await cred.user.updateProfile({ displayName: `${first} ${last}`.trim() });
-                    }
-                    window.location.href = 'index.html';
+                    const user = cred.user;
+                    const displayName = [first, last].filter(Boolean).join(' ').trim();
+                    if (displayName) await user.updateProfile({ displayName });
+                    await upsertUserDoc(user, { firstName: first, lastName: last });
+                    await postAuth({ ...user, displayName });
                 } catch (err) {
-                    signupError.textContent = err && err.message ? err.message : 'Sign up failed';
+                    if (err && err.code === 'auth/email-already-in-use') setError(signupError, 'Email already in use. Try signing in.');
+                    else if (err && err.code === 'auth/weak-password') setError(signupError, 'Choose a stronger password.');
+                    else setError(signupError, 'Sign up failed.');
                 }
+            });
+
+            // Google
+            const googleProvider = new firebase.auth.GoogleAuthProvider();
+            const googleButtons = [document.getElementById('googleSignInBtn'), document.getElementById('googleSignupBtn')].filter(Boolean);
+            googleButtons.forEach((btn) => btn.addEventListener('click', async () => {
+                setError(signinError, ''); setError(signupError, '');
+                try {
+                    const cred = await auth.signInWithPopup(googleProvider);
+                    const u = cred.user;
+                    await upsertUserDoc(u);
+                    await postAuth(u);
+                } catch (err) {
+                    if (err && (err.code === 'auth/account-exists-with-different-credential' || err.code === 'auth/credential-already-in-use')) {
+                        const email = err.email || '';
+                        setError(signinError, email ? `This email is already used with another sign-in method. Please sign in with ${email} using your existing method, then connect Google from your profile.` : 'This email is already used with another sign-in method.');
+                        setError(signupError, email ? `This email is already used with another sign-in method. Please sign in with ${email} using your existing method, then connect Google from your profile.` : 'This email is already used with another sign-in method.');
+                    } else {
+                        setError(signinError, 'Google sign-in failed.');
+                        setError(signupError, 'Google sign-in failed.');
+                    }
+                }
+            }));
+
+            // Keep header avatar in sync
+            auth.onAuthStateChanged((u) => {
+                if (u) cacheProfile(u);
             });
         });
     </script>

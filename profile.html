@@ -73,6 +73,34 @@
             };
             navCheck();
 
+            // Initials avatar helpers
+            const getInitials = (profile) => {
+                if (!profile) return '';
+                const name = (profile.displayName || '').trim();
+                if (name) {
+                    const parts = name.split(/\s+/).filter(Boolean);
+                    const first = parts[0] && parts[0][0] ? parts[0][0] : '';
+                    const last = parts.length > 1 && parts[parts.length - 1][0] ? parts[parts.length - 1][0] : (parts[0] && parts[0][1] ? parts[0][1] : '');
+                    return (first + last).toUpperCase();
+                }
+                const email = (profile.email || '').trim();
+                if (email) {
+                    const local = (email.split('@')[0] || '').replace(/[^a-zA-Z]/g, '');
+                    if (local.length >= 2) return (local[0] + local[1]).toUpperCase();
+                    if (local.length === 1) return local[0].toUpperCase();
+                    return (email[0] || '?').toUpperCase();
+                }
+                return '';
+            };
+            const generateInitialsAvatar = (initials, size) => {
+                const s = Math.max(24, Math.min(256, size || 56));
+                const fontSize = Math.floor(s * 0.42);
+                const radius = Math.floor(s / 2);
+                const safeInitials = (initials || '?').slice(0, 2);
+                const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}' viewBox='0 0 ${s} ${s}'>\n  <rect width='100%' height='100%' rx='${radius}' ry='${radius}' fill='#111'/>\n  <text x='50%' y='50%' font-family='Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif' font-size='${fontSize}' fill='#fff' text-anchor='middle' dominant-baseline='central'>${safeInitials}</text>\n</svg>`;
+                return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+            };
+
             // Populate header section
             const titleEl = document.getElementById('pfTitle');
             const subEl = document.getElementById('pfSub');
@@ -80,8 +108,21 @@
             if (titleEl) titleEl.textContent = prof.displayName ? `Welcome, ${prof.displayName}` : 'My Account';
             if (subEl) subEl.textContent = prof.email || '';
             if (avatarEl) {
-                if (prof.photoURL) { avatarEl.src = prof.photoURL; avatarEl.style.display = ''; }
-                else { avatarEl.style.display = 'none'; }
+                avatarEl.referrerPolicy = 'no-referrer';
+                avatarEl.crossOrigin = 'anonymous';
+                const initialsUrl = generateInitialsAvatar(getInitials(prof), 56);
+                avatarEl.onload = () => { avatarEl.style.display = ''; };
+                avatarEl.onerror = () => {
+                    if (avatarEl.src !== initialsUrl) {
+                        avatarEl.src = initialsUrl;
+                        return;
+                    }
+                    avatarEl.style.display = 'none';
+                };
+                avatarEl.src = prof.photoURL ? prof.photoURL : initialsUrl;
+                if (avatarEl.complete && avatarEl.naturalWidth > 0) {
+                    avatarEl.style.display = '';
+                }
             }
 
             // Sign out handler

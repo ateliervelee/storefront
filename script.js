@@ -345,13 +345,79 @@ document.addEventListener('allScriptsLoaded', async () => {
                 else sessionStorage.removeItem(PROFILE_KEY);
             } catch {}
         };
+        const getInitials = (profile) => {
+            if (!profile) return '';
+            const name = (profile.displayName || '').trim();
+            if (name) {
+                const parts = name.split(/\s+/).filter(Boolean);
+                const first = parts[0] && parts[0][0] ? parts[0][0] : '';
+                const last = parts.length > 1 && parts[parts.length - 1][0] ? parts[parts.length - 1][0] : (parts[0] && parts[0][1] ? parts[0][1] : '');
+                return (first + last).toUpperCase();
+            }
+            const email = (profile.email || '').trim();
+            if (email) {
+                const local = (email.split('@')[0] || '').replace(/[^a-zA-Z]/g, '');
+                if (local.length >= 2) return (local[0] + local[1]).toUpperCase();
+                if (local.length === 1) return local[0].toUpperCase();
+                return (email[0] || '?').toUpperCase();
+            }
+            return '';
+        };
+        const generateInitialsAvatar = (initials, size) => {
+            const s = Math.max(16, Math.min(256, size || 28));
+            const fontSize = Math.floor(s * 0.5);
+            const radius = Math.floor(s / 2);
+            const safeInitials = (initials || '?').slice(0, 2);
+            const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}' viewBox='0 0 ${s} ${s}'>\n  <rect width='100%' height='100%' rx='${radius}' ry='${radius}' fill='#111'/>\n  <text x='50%' y='50%' font-family='Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif' font-size='${fontSize}' fill='#fff' text-anchor='middle' dominant-baseline='central'>${safeInitials}</text>\n</svg>`;
+            return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+        };
+        const pickAvatarSize = (imgEl, fallback) => {
+            try {
+                const cs = window.getComputedStyle(imgEl);
+                const px = cs && cs.width ? parseInt(cs.width, 10) : NaN;
+                if (!isNaN(px) && px > 0) return px;
+            } catch {}
+            return fallback || 28;
+        };
         const applyAvatar = (profile) => {
             if (!avatarImg || !avatarFallback) return;
-            const url = profile && profile.photoURL ? profile.photoURL : '';
-            if (url) {
-                avatarImg.src = url;
-                avatarImg.style.display = '';
-                avatarFallback.style.display = 'none';
+            const originalUrl = profile && profile.photoURL ? profile.photoURL : '';
+            const size = pickAvatarSize(avatarImg, 28);
+            const initials = getInitials(profile);
+            const initialsUrl = profile ? generateInitialsAvatar(initials, size) : '';
+            const finalUrl = originalUrl || initialsUrl;
+
+            // Ensure handlers are set once
+            if (avatarImg) {
+                avatarImg.onload = () => {
+                    avatarImg.style.display = '';
+                    avatarFallback.style.display = 'none';
+                };
+                avatarImg.onerror = () => {
+                    if (profile) {
+                        const altUrl = generateInitialsAvatar(getInitials(profile), size);
+                        if (avatarImg.src !== altUrl) {
+                            avatarImg.src = altUrl;
+                            return;
+                        }
+                    }
+                    avatarImg.style.display = 'none';
+                    avatarFallback.style.display = '';
+                };
+                // Reduce third-party blocking
+                avatarImg.referrerPolicy = 'no-referrer';
+                avatarImg.crossOrigin = 'anonymous';
+            }
+
+            if (finalUrl) {
+                avatarImg.src = finalUrl;
+                if (avatarImg.complete && avatarImg.naturalWidth > 0) {
+                    avatarImg.style.display = '';
+                    avatarFallback.style.display = 'none';
+                } else {
+                    avatarImg.style.display = 'none';
+                    avatarFallback.style.display = '';
+                }
             } else {
                 avatarImg.style.display = 'none';
                 avatarFallback.style.display = '';
@@ -359,8 +425,22 @@ document.addEventListener('allScriptsLoaded', async () => {
         };
 
         // Hydrate immediately from cache after header is injected
-        const cached = readCachedProfile();
+        let cached = readCachedProfile();
         if (cached) applyAvatar(cached);
+
+        // If no cache yet but auth has current user, bootstrap cache instantly
+        if (!cached && auth && auth.currentUser) {
+            const u = auth.currentUser;
+            const profile = {
+                uid: u.uid || '',
+                displayName: u.displayName || '',
+                email: u.email || '',
+                photoURL: u.photoURL || ''
+            };
+            writeCachedProfile(profile);
+            applyAvatar(profile);
+            cached = profile;
+        }
 
         if (auth && (avatarImg || avatarFallback)) {
             auth.onAuthStateChanged((user) => {
