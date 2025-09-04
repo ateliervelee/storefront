@@ -6,6 +6,8 @@ class CheckoutManager {
         this.cartManager = null;
         this.countries = [];
         this.isOrderSummaryExpanded = false;
+        this.userAddresses = [];
+        this.pendingCountryPrefill = { billing: null, shipping: null };
         
         // Initialize Stripe
         this.stripe = Stripe('pk_test_51RzZOKLtKPQT2y5pQzio38nyUMmM6dSjMtWyuXG77HYAsp7agvkzt8YOnh258iQ0wkwhdXcsa5pzKQqxpziWtkf600FCPW1Fev');
@@ -137,6 +139,12 @@ class CheckoutManager {
                 placeholderOption.remove();
             }
         }
+
+        // Apply any pending prefill after options exist
+        if (this.pendingCountryPrefill.billing) {
+            countrySelect.value = this.pendingCountryPrefill.billing;
+            this.pendingCountryPrefill.billing = null;
+        }
     }
 
     setupAuth() {
@@ -205,26 +213,6 @@ class CheckoutManager {
                     console.log('👤 No user found, signing in anonymously...');
                     await this.auth.signInAnonymously();
                     console.log('✅ Anonymous sign-in successful');
-
-                    const auth = firebase.auth();
-                
-                    // Get the currently authenticated user
-                    const currentUser = auth.currentUser;
-                    if (currentUser) {
-                        console.log('👤 Authenticated user on success page:', {
-                            uid: currentUser.uid,
-                            email: currentUser.email || 'No email',
-                            isAnonymous: currentUser.isAnonymous,
-                            displayName: currentUser.displayName || 'No display name'
-                        });
-                    } else {
-                        console.log('🚫 No authenticated user found on success page');
-                    } 
-
-                    console.log('🔍 Searching for order with session ID:', "cs_test_a12h56cRTODguAkKqoHdunS98n7pPaOW773124z8svKlmlZnQoMiqIkewe");
-                
-
-
                     return; // onAuthStateChanged will be called again with the new user
                 } catch (error) {
                     console.error('❌ Anonymous sign-in failed:', error);
@@ -239,30 +227,6 @@ class CheckoutManager {
                     displayName: user.displayName || 'N/A (anonymous)',
                     isAnonymous: user.isAnonymous
                 });
-
-                const db = firebase.firestore();    
-
-                                    // First, try to find any order with this session ID (without status filter)
-                                    const allOrdersQuery = db.collection('orders')
-                                    .where('customerId', '==', user.uid) 
-                                    .where('stripeSessionId', '==', "cs_test_a12h56cRTODguAkKqoHdunS98n7pPaOW773124z8svKlmlZnQoMiqIkewe")
-                                    .limit(5);
-                
-                                console.log('🔍 Searching all orders with session ID...');
-                                const allOrdersSnapshot = await allOrdersQuery.get();
-                                
-                                console.log('📊 Found orders with session ID:', {
-                                    count: allOrdersSnapshot.size,
-                                    orders: allOrdersSnapshot.docs.map(doc => ({
-                                        id: doc.id,
-                                        data: {
-                                            orderNumber: doc.data().orderNumber,
-                                            status: doc.data().status,
-                                            paymentStatus: doc.data().paymentStatus,
-                                            stripeSessionId: doc.data().stripeSessionId
-                                        }
-                                    }))
-                                });
             }
             
             this.currentUser = user;
@@ -271,6 +235,8 @@ class CheckoutManager {
             // Only prefill form data for authenticated (non-anonymous) users
             if (user && !user.isAnonymous) {
                 this.prefillUserData(user);
+                // Load and render address choices for billing/shipping
+                this.loadUserAddressesAndRender();
             }
         });
 
@@ -937,6 +903,12 @@ class CheckoutManager {
 
         // Set Croatia as default
         shippingCountrySelect.value = 'HR';
+
+        // Apply any pending prefill after options exist
+        if (this.pendingCountryPrefill.shipping) {
+            shippingCountrySelect.value = this.pendingCountryPrefill.shipping;
+            this.pendingCountryPrefill.shipping = null;
+        }
     }
 
     clearShippingValidation() {
@@ -944,6 +916,131 @@ class CheckoutManager {
         shippingInputs.forEach(input => {
             input.classList.remove('valid', 'invalid');
         });
+    }
+
+    // ---------- Addresses: load, render cards, select & fill ----------
+    async loadUserAddressesAndRender() {
+        try {
+            if (!this.db || !this.currentUser || this.currentUser.isAnonymous) return;
+            const docRef = this.db.collection('users').doc(this.currentUser.uid);
+            const snap = await docRef.get();
+            const data = snap.exists ? (snap.data() || {}) : {};
+            const addresses = Array.isArray(data.addresses) ? data.addresses : [];
+            // Normalize minimal shape
+            this.userAddresses = addresses.map(a => ({
+                id: a.id || String(Math.random()).slice(2),
+                useBilling: !!a.useBilling,
+                useShipping: !!a.useShipping,
+                isDefault: !!a.isDefault,
+                country: a.country || 'HR',
+                city: a.city || '',
+                postalCode: a.postalCode || '',
+                addressLine1: a.addressLine1 || '',
+                addressLine2: a.addressLine2 || '',
+                phone: a.phone || ''
+            }));
+
+            this.renderAddressChoices('billing', document.getElementById('billingAddressChoices'));
+            this.renderAddressChoices('shipping', document.getElementById('shippingAddressChoices'));
+        } catch (err) {
+            console.warn('⚠️ Failed to load user addresses:', err);
+        }
+    }
+
+    renderAddressChoices(type, container) {
+        if (!container) return;
+        const filterKey = type === 'billing' ? 'useBilling' : 'useShipping';
+        const list = this.userAddresses.filter(a => a[filterKey]);
+        container.innerHTML = '';
+        container.style.display = list.length ? 'flex' : 'none';
+        if (!list.length) return;
+
+        // Find preselected default for this type
+        const defaultAddr = list.find(a => a.isDefault);
+
+        list.forEach(addr => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'addr-card';
+            chip.dataset.addrId = addr.id;
+            const label = (addr.addressLine1 || '').trim().split(/\s+/)[0] || 'Address';
+            chip.textContent = label;
+            chip.addEventListener('click', () => this.selectAddressCard(type, addr.id));
+            container.appendChild(chip);
+        });
+
+        // Preselect default if exists
+        if (defaultAddr) {
+            this.selectAddressCard(type, defaultAddr.id);
+        }
+    }
+
+    selectAddressCard(type, addrId) {
+        const containerId = type === 'billing' ? 'billingAddressChoices' : 'shippingAddressChoices';
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const cards = Array.from(container.querySelectorAll('.addr-card'));
+        cards.forEach(c => c.classList.remove('selected'));
+        const selected = cards.find(c => c.dataset.addrId === addrId);
+        if (selected) selected.classList.add('selected');
+
+        const addr = this.userAddresses.find(a => a.id === addrId);
+        if (addr) this.fillFormFromAddress(type, addr);
+
+        // If syncing shipping with billing, update shipping too
+        if (type === 'billing') {
+            const sameAsBilling = document.getElementById('sameAsBilling')?.checked;
+            if (sameAsBilling) this.copyBillingToShipping();
+        }
+    }
+
+    fillFormFromAddress(type, addr) {
+        const map = type === 'billing' ? {
+            address: 'address',
+            addressDetails: 'addressDetails',
+            country: 'country',
+            city: 'city',
+            postcode: 'postcode',
+            phone: 'phone'
+        } : {
+            address: 'shippingAddress',
+            addressDetails: 'shippingAddressDetails',
+            country: 'shippingCountry',
+            city: 'shippingCity',
+            postcode: 'shippingPostcode',
+            phone: 'shippingPhone'
+        };
+
+        const setValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value || '';
+        };
+
+        setValue(map.address, addr.addressLine1 || '');
+        setValue(map.addressDetails, addr.addressLine2 || '');
+        setValue(map.city, addr.city || '');
+        setValue(map.postcode, addr.postalCode || '');
+        if (map.phone) setValue(map.phone, addr.phone || '');
+
+        // Country selects might not be populated yet; store pending then attempt now
+        const code = addr.country || 'HR';
+        const select = document.getElementById(map.country);
+        if (select) {
+            const hasOption = !!select.querySelector(`option[value="${code}"]`);
+            if (hasOption) {
+                select.value = code;
+            } else {
+                // Save pending for when countries load
+                if (type === 'billing') this.pendingCountryPrefill.billing = code; else this.pendingCountryPrefill.shipping = code;
+                // Retry shortly
+                setTimeout(() => {
+                    const s2 = document.getElementById(map.country);
+                    if (s2 && s2.querySelector(`option[value="${code}"]`)) s2.value = code;
+                }, 400);
+            }
+        } else {
+            if (type === 'billing') this.pendingCountryPrefill.billing = code; else this.pendingCountryPrefill.shipping = code;
+        }
     }
 
     async findExistingPendingOrder() {

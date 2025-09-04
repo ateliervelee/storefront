@@ -305,6 +305,10 @@
                             <label>Postal code</label>
                             <input class="input addr-postal" type="text" value="${addr.postalCode || ''}">
                         </div>
+                        <div class="form-row full">
+                            <label>Contact phone</label>
+                            <input class="input addr-phone" type="tel" value="${addr.phone || ''}">
+                        </div>
                     </div>
                     <hr class="hr"/>
                     <div class="row-actions">
@@ -341,7 +345,8 @@
                 const items = Array.from(addressesList.querySelectorAll('.address-card'));
                 return items.map((node) => {
                     const get = (sel) => node.querySelector(sel);
-                    return {
+                    const phoneVal = (get('.addr-phone')?.value || '').trim();
+                    const address = {
                         id: node.dataset.id,
                         useBilling: !!get('.addr-use-billing')?.checked,
                         useShipping: !!get('.addr-use-shipping')?.checked,
@@ -352,6 +357,8 @@
                         addressLine1: get('.addr-line1')?.value?.trim() || '',
                         addressLine2: get('.addr-line2')?.value?.trim() || ''
                     };
+                    if (phoneVal) address.phone = phoneVal;
+                    return address;
                 });
             };
 
@@ -406,7 +413,8 @@
                         city: a.city || '',
                         postalCode: a.postalCode || '',
                         addressLine1: a.addressLine1 || '',
-                        addressLine2: a.addressLine2 || ''
+                        addressLine2: a.addressLine2 || '',
+                        phone: a.phone || ''
                     }));
                     addressesList.innerHTML = '';
                     addrs.forEach(a => addressesList.appendChild(renderAddressCard(a)));

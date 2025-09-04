@@ -14,6 +14,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
     <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <style>
+        .address-choices { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.25rem 0 0.75rem 0; }
+        .addr-card { padding: 0.4rem 0.6rem; border: 1px solid #e5e7eb; border-radius: 999px; background: #fff; cursor: pointer; font-size: 0.875rem; }
+        .addr-card.selected { background: #111827; color: #fff; border-color: #111827; }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -74,15 +79,6 @@
                                 </div>
                             </div>
 
-                            <div class="form-row full-width">
-                                <div class="form-group">
-                                    <label for="country">Country *</label>
-                                    <select id="country" name="country" required>
-                                        <option value="">Select country</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="firstName">First Name *</label>
@@ -93,6 +89,8 @@
                                     <input type="text" id="lastName" name="lastName" required placeholder="Last name">
                                 </div>
                             </div>
+
+                            <div class="address-choices" id="billingAddressChoices"></div>
 
                             <div class="form-row full-width">
                                 <div class="form-group">
@@ -105,6 +103,15 @@
                                 <div class="form-group">
                                     <label for="addressDetails">Address Details</label>
                                     <input type="text" id="addressDetails" name="addressDetails" placeholder="Apartment, suite, floor (optional)">
+                                </div>
+                            </div>
+
+                            <div class="form-row full-width">
+                                <div class="form-group">
+                                    <label for="country">Country *</label>
+                                    <select id="country" name="country" required>
+                                        <option value="">Select country</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -185,19 +192,21 @@
                                 </div>
                             </div>
 
+                            <div class="address-choices" id="shippingAddressChoices"></div>
+
+                            <div class="form-row full-width">
+                                <div class="form-group">
+                                    <label for="shippingAddress">Address *</label>
+                                    <input type="text" id="shippingAddress" name="shippingAddress" required>
+                                </div>
+                            </div>
+
                             <div class="form-row full-width">
                                 <div class="form-group">
                                     <label for="shippingCountry">Country *</label>
                                     <select id="shippingCountry" name="shippingCountry" required>
                                         <option value="">Select country...</option>
                                     </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row full-width">
-                                <div class="form-group">
-                                    <label for="shippingAddress">Address *</label>
-                                    <input type="text" id="shippingAddress" name="shippingAddress" required>
                                 </div>
                             </div>
 
