@@ -42,17 +42,8 @@ app.post('/create-checkout-session', async (req, res) => {
             line_items: line_items,
             success_url: `${req.headers.origin || process.env.ALLOWED_ORIGIN || 'http://localhost:8000'}/success.html?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${req.headers.origin || process.env.ALLOWED_ORIGIN || 'http://localhost:8000'}/cancel.html`,
-            billing_address_collection: 'required',
-            shipping_address_collection: {
-                allowed_countries: ['HR']
-            },
+            billing_address_collection: 'auto',
             customer_email: customer_info?.email,
-            customer_details: customer_info ? {
-                name: customer_info.name,
-                email: customer_info.email,
-                phone: customer_info.phone,
-                address: customer_info.address
-            } : undefined,
             metadata: metadata
         });
 

@@ -59,20 +59,17 @@ export default {
 
       console.log('💳 Creating Stripe checkout session...');
       
-      // Create Stripe checkout session with prefilled data
+      // Create Stripe checkout session with minimal address collection (none)
       const sessionParams = {
         'mode': 'payment',
         'success_url': `https://www.ateliervelee.com/success.html?session_id={CHECKOUT_SESSION_ID}`,
         'cancel_url': `https://www.ateliervelee.com/cancel.html`,
-        'billing_address_collection': 'required',
-        'shipping_address_collection[allowed_countries][0]': 'HR',
         ...flattenLineItems(line_items),
-        ...flattenShippingInfo(shipping_info || {}),
+        // Intentionally not setting billing_address_collection or shipping_address_collection
         ...flattenMetadata(metadata || {}),
       };
       
 
-      
       // Add customer email if provided
       if (customer_info?.email) {
         sessionParams['customer_email'] = customer_info.email;
@@ -173,17 +170,8 @@ function flattenLineItems(lineItems) {
 
 // Helper function to flatten shipping info for URL encoding
 function flattenShippingInfo(shippingInfo) {
-  const params = {};
-  
-  if (shippingInfo.line1) {
-    params['shipping_address_collection[allowed_countries][0]'] = 'HR';
-    params['shipping_options[0][shipping_rate_data][type]'] = 'fixed_amount';
-    params['shipping_options[0][shipping_rate_data][fixed_amount][amount]'] = '0';
-    params['shipping_options[0][shipping_rate_data][fixed_amount][currency]'] = 'eur';
-    params['shipping_options[0][shipping_rate_data][display_name]'] = 'Free shipping';
-  }
-  
-  return params;
+  // No-op to avoid collecting shipping in Stripe Checkout
+  return {};
 }
 
 // Helper function to flatten metadata for URL encoding
