@@ -93,7 +93,7 @@ const hero = document.querySelector('.hero');
 
 window.addEventListener('scroll', () => {
     const scrolled = window.pageYOffset;
-    const heroHeight = hero.offsetHeight;
+    const heroHeight = hero ? hero.offsetHeight : 0;
     const rate = scrolled * -0.5;
     
     if (scrolled < heroHeight) {

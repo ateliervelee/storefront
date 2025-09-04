@@ -14,7 +14,7 @@
         .profile-title { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0; color: #222; }
         .profile-sub { color: #6b7280; margin: 0.25rem 0 0 0; }
         .orders-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; background: #fff; }
-        .orders-title { font-weight: 600; margin: 0 0 0.75rem 0; }
+        .orders-title { font-weight: 600; font-size: 1rem; margin: 0 0 0.4rem 0; }
         .orders-empty { color: #6b7280; }
         .orders-list { display: grid; gap: 0.75rem; }
         .order-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem; }
@@ -26,6 +26,29 @@
         .profile-actions { margin-top: 0.5rem; }
         .signout-btn { background: #fff; color: #111; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer; }
         .signout-btn:hover { background: #f7f7f7; }
+        /* New: forms and addresses */
+        .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; background: #fff; margin-bottom: 1rem; }
+        .card h2 { font-weight: 600; font-size: 1rem; margin: 0 0 0.4rem 0; }
+        .form-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-row { display: block; gap: 0.25rem; }
+        .form-row label { display: block; font-size: 0.85rem; color: #374151; }
+        .input { width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #e5e7eb; border-radius: 8px; font-family: 'Inter', system-ui; }
+        .select { width: 100%; padding: 0.5rem 0.7rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+        .row-actions { display: flex; gap: 0.5rem; align-items: center; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.55rem 0.8rem; border-radius: 8px; border: 1px solid #222; background: #222; color: #fff; font-weight: 500; cursor: pointer; transition: background 0.2s ease; }
+        .btn.secondary { background: #fff; color: #222; border-color: #e5e7eb; }
+        .btn:hover { background: #111; }
+        .btn.secondary:hover { background: #f7f7f7; }
+        .muted { color: #6b7280; font-size: 0.9rem; }
+        .addresses-list { display: grid; gap: 0.75rem; }
+        .address-card { border: 1px solid #f3f4f6; border-radius: 10px; padding: 0.75rem; background: #fff; }
+        .address-header { display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+        .address-types { display: flex; gap: 0.75rem; align-items: center; }
+        .flags { display: flex; gap: 1rem; align-items: center; }
+        .hr { height: 1px; background: #f3f4f6; border: 0; margin: 0.75rem 0; }
+        .notice { color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.5rem 0.6rem; border-radius: 8px; display: none; }
+        .error { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; padding: 0.5rem 0.6rem; border-radius: 8px; display: none; }
     </style>
 </head>
 <body class="profile-page store-page">
@@ -43,6 +66,53 @@
             </div>
         </section>
 
+        <!-- Account details (merged) -->
+        <section class="card" id="accountCard">
+            <h2>Personal details</h2>
+            <div class="notice" id="accountNotice" style="margin-bottom:0.5rem;">Saved.</div>
+            <div class="error" id="accountError" style="margin-bottom:0.5rem;"></div>
+            <form id="accountForm" class="form-grid" autocomplete="on">
+                <div class="form-row">
+                    <label for="acFirst">First name</label>
+                    <input id="acFirst" class="input" type="text" autocomplete="given-name" required>
+                </div>
+                <div class="form-row">
+                    <label for="acLast">Last name</label>
+                    <input id="acLast" class="input" type="text" autocomplete="family-name" required>
+                </div>
+                <div class="form-row">
+                    <label for="acPhone">Phone</label>
+                    <input id="acPhone" class="input" type="tel" autocomplete="tel">
+                </div>
+                <div class="form-row full" style="display:grid; gap:0.25rem; max-width:256px; justify-items:start; justify-self:start;">
+                    <label for="hasCompany">i have a company</label>
+                    <input id="hasCompany" type="checkbox">
+                </div>
+                <div id="companyFields" class="form-grid" style="display:none;">
+                    <div class="form-row">
+                        <label for="coName">Company name</label>
+                        <input id="coName" class="input" type="text" autocomplete="organization">
+                    </div>
+                    <div class="form-row">
+                        <label for="coVat">VAT/OIB</label>
+                        <input id="coVat" class="input" type="text" autocomplete="off">
+                    </div>
+                </div>
+
+            </form>
+            <div class="hr" style="margin-top:0.75rem;"></div>
+            <h2 style="margin-top:0.75rem;">Addresses</h2>
+            <div class="notice" id="addrNotice">Saved.</div>
+            <div class="error" id="addrError"></div>
+            <div class="addresses-list" id="addressesList"></div>
+            <div class="row-actions" style="margin-top:0.75rem;">
+                <button type="button" class="btn secondary" id="addAddressBtn">Add address</button>
+            </div>
+            <div class="form-row full" style="margin-top:0.75rem;">
+                <button type="button" class="btn" id="saveAllBtn" style="width:100%;">Save details</button>
+            </div>
+        </section>
+ 
         <section class="orders-card">
             <h2 class="orders-title">Your Orders</h2>
             <div id="ordersContainer">
@@ -51,9 +121,9 @@
             </div>
         </section>
     </main>
-
+ 
     <footer-placeholder></footer-placeholder>
-
+ 
     <script src="main.js"></script>
     <script>
         document.addEventListener('allScriptsLoaded', async () => {
@@ -65,14 +135,14 @@
                 window.location.replace('signup.html');
                 return;
             }
-
+ 
             // Force scrolled header style
             const navCheck = () => {
                 const navEl = document.querySelector('.navbar');
                 if (navEl) { navEl.style.setProperty('--navbar-bg-opacity', 1); navEl.classList.add('scrolled'); }
             };
             navCheck();
-
+ 
             // Initials avatar helpers
             const getInitials = (profile) => {
                 if (!profile) return '';
@@ -100,7 +170,7 @@
                 const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}' viewBox='0 0 ${s} ${s}'>\n  <rect width='100%' height='100%' rx='${radius}' ry='${radius}' fill='#111'/>\n  <text x='50%' y='50%' font-family='Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif' font-size='${fontSize}' fill='#fff' text-anchor='middle' dominant-baseline='central'>${safeInitials}</text>\n</svg>`;
                 return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
             };
-
+ 
             // Populate header section
             const titleEl = document.getElementById('pfTitle');
             const subEl = document.getElementById('pfSub');
@@ -124,7 +194,7 @@
                     avatarEl.style.display = '';
                 }
             }
-
+ 
             // Sign out handler
             try {
                 const btn = document.getElementById('pfSignOutBtn');
@@ -139,32 +209,287 @@
                 }
             } catch {}
 
+            // ---------- Customer Details (Firestore) ----------
+            const services = window.firebaseServices || {};
+            const db = services.db;
+            const auth = services.auth;
+            const uid = prof.uid;
+            const usersRef = db ? db.collection('users').doc(uid) : null;
+            // Legacy read-only ref for migration; no longer written to
+            const legacyDetailsRef = db ? db.collection('customerDetails').doc(uid) : null;
+
+            const el = (id) => document.getElementById(id);
+
+            // Prefill helpers
+            const splitName = (name) => {
+                const n = (name || '').trim();
+                if (!n) return { first: '', last: '' };
+                const parts = n.split(/\s+/);
+                if (parts.length === 1) return { first: parts[0], last: '' };
+                return { first: parts[0], last: parts.slice(1).join(' ') };
+            };
+
+            const acFirst = el('acFirst');
+            const acLast = el('acLast');
+            const acPhone = el('acPhone');
+            const hasCompany = el('hasCompany');
+            const companyFields = el('companyFields');
+            const coName = el('coName');
+            const coVat = el('coVat');
+            const addressesList = el('addressesList');
+
+            // Immediate prefill from cached profile displayName (before Firestore)
+            try {
+                const { first: initFirst, last: initLast } = splitName(prof.displayName || '');
+                if (acFirst && !acFirst.value) acFirst.value = initFirst || '';
+                if (acLast && !acLast.value) acLast.value = initLast || '';
+            } catch {}
+
+            const toggleCompanyUI = () => {
+                if (companyFields) companyFields.style.display = (hasCompany && hasCompany.checked) ? '' : 'none';
+            };
+            if (hasCompany) { hasCompany.addEventListener('change', toggleCompanyUI); }
+
+            const showMsg = (id, ok, text) => {
+                const n = el(id + (ok ? 'Notice' : 'Error'));
+                if (!n) return;
+                n.textContent = text || (ok ? 'Saved.' : 'Something went wrong.');
+                n.style.display = '';
+                setTimeout(() => { try { n.style.display = 'none'; } catch {} }, 1800);
+            };
+
+            const COUNTRIES = [ { code: 'HR', name: 'Croatia' } ];
+
+            // Address card renderer
+            const renderAddressCard = (addr) => {
+                const id = addr.id || String(Date.now());
+                const wrapper = document.createElement('div');
+                wrapper.className = 'address-card';
+                wrapper.dataset.id = id;
+                wrapper.innerHTML = `
+                    <div class="address-header">
+                        <div class="address-types">
+                            <div class="form-row" style="min-width:110px;">
+                                <label>Billing</label>
+                                <input type="checkbox" class="addr-use-billing" ${addr.useBilling ? 'checked' : ''}>
+                            </div>
+                            <div class="form-row" style="min-width:110px;">
+                                <label>Shipping</label>
+                                <input type="checkbox" class="addr-use-shipping" ${addr.useShipping ? 'checked' : ''}>
+                            </div>
+                            <div class="form-row" style="min-width:150px;">
+                                <label>Default address</label>
+                                <input type="checkbox" class="addr-default" ${addr.isDefault ? 'checked' : ''}>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+
+                        <div class="form-row full">
+                            <label>Address line</label>
+                            <input class="input addr-line1" type="text" value="${addr.addressLine1 || ''}">
+                        </div>
+                        <div class="form-row full">
+                            <label>Address details</label>
+                            <input class="input addr-line2" type="text" value="${addr.addressLine2 || ''}">
+                        </div>
+                        <div class="form-row">
+                            <label>Country</label>
+                            <select class="select addr-country">${COUNTRIES.map(c => `<option value="${c.code}" ${((addr.country||'HR')===c.code)?'selected':''}>${c.name}</option>`).join('')}</select>
+                        </div>
+                        <div class="form-row">
+                            <label>City</label>
+                            <input class="input addr-city" type="text" value="${addr.city || ''}">
+                        </div>
+                        <div class="form-row">
+                            <label>Postal code</label>
+                            <input class="input addr-postal" type="text" value="${addr.postalCode || ''}">
+                        </div>
+                    </div>
+                    <hr class="hr"/>
+                    <div class="row-actions">
+                        <button type="button" class="btn secondary addr-remove">Remove</button>
+                    </div>
+                `;
+                // Enforce single default per type (billing/shipping)
+                const def = wrapper.querySelector('.addr-default');
+                if (def) {
+                    def.addEventListener('change', (ev) => {
+                        if (!ev.target.checked) return; // allow zero defaults
+                        const thisIsBilling = !!wrapper.querySelector('.addr-use-billing')?.checked;
+                        const thisIsShipping = !!wrapper.querySelector('.addr-use-shipping')?.checked;
+                        const allCards = Array.from(addressesList.querySelectorAll('.address-card'));
+                        allCards.forEach((node) => {
+                            if (node === wrapper) return;
+                            const otherBilling = !!node.querySelector('.addr-use-billing')?.checked;
+                            const otherShipping = !!node.querySelector('.addr-use-shipping')?.checked;
+                            const sharesType = (thisIsBilling && otherBilling) || (thisIsShipping && otherShipping);
+                            if (sharesType) {
+                                const cb = node.querySelector('.addr-default');
+                                if (cb && cb.checked) cb.checked = false;
+                            }
+                        });
+                    });
+                }
+                // Remove handler
+                const rm = wrapper.querySelector('.addr-remove');
+                rm.addEventListener('click', () => { wrapper.remove(); });
+                return wrapper;
+            };
+
+            const collectAddresses = () => {
+                const items = Array.from(addressesList.querySelectorAll('.address-card'));
+                return items.map((node) => {
+                    const get = (sel) => node.querySelector(sel);
+                    return {
+                        id: node.dataset.id,
+                        useBilling: !!get('.addr-use-billing')?.checked,
+                        useShipping: !!get('.addr-use-shipping')?.checked,
+                        isDefault: !!get('.addr-default')?.checked,
+                        country: get('.addr-country')?.value || 'HR',
+                        city: get('.addr-city')?.value?.trim() || '',
+                        postalCode: get('.addr-postal')?.value?.trim() || '',
+                        addressLine1: get('.addr-line1')?.value?.trim() || '',
+                        addressLine2: get('.addr-line2')?.value?.trim() || ''
+                    };
+                });
+            };
+
+            const ensureDefaultAddress = (addresses) => {
+                if (!addresses || !addresses.length) return;
+                if (!addresses.some(a => a.isDefault)) {
+                    const firstShipping = addresses.find(a => a.useShipping) || addresses[0];
+                    if (firstShipping) firstShipping.isDefault = true;
+                }
+            };
+
+            // Load users/{uid} and prefill
+            if (usersRef) {
+                try {
+                    const userSnap = await usersRef.get();
+                    const userDoc = userSnap && userSnap.exists ? (userSnap.data() || {}) : {};
+
+                    const sourceFirst = userDoc.firstName;
+                    const sourceLast = userDoc.lastName;
+                    const { first: dnFirst, last: dnLast } = splitName(prof.displayName || '');
+                    const firstNamePrefill = sourceFirst || dnFirst || '';
+                    const lastNamePrefill = sourceLast || dnLast || '';
+
+                    if (acFirst) acFirst.value = firstNamePrefill;
+                    if (acLast) acLast.value = lastNamePrefill;
+                    if (acPhone) acPhone.value = userDoc.phone || '';
+                    const effectiveCompany = userDoc.company || null;
+                    if (coName) coName.value = (effectiveCompany && effectiveCompany.name) || '';
+                    if (coVat) coVat.value = (effectiveCompany && effectiveCompany.vatId) || '';
+
+                    // Company checkbox visibility
+                    if (hasCompany) {
+                        hasCompany.checked = !!(effectiveCompany && (effectiveCompany.name || effectiveCompany.vatId));
+                        toggleCompanyUI();
+                    }
+
+                    // If welcome title is generic and we have names, update title and cache
+                    const maybeDisplayName = [firstNamePrefill, lastNamePrefill].filter(Boolean).join(' ').trim();
+                    if (maybeDisplayName && titleEl && titleEl.textContent === 'My Account') {
+                        titleEl.textContent = `Welcome, ${maybeDisplayName}`;
+                        const next = { ...prof, displayName: maybeDisplayName };
+                        writeCachedProfile(next);
+                    }
+
+                    let addrs = Array.isArray(userDoc.addresses) ? userDoc.addresses : [];
+                    addrs = addrs.map(a => ({
+                        id: a.id,
+                        useBilling: !!a.useBilling,
+                        useShipping: !!a.useShipping,
+                        isDefault: !!a.isDefault,
+                        country: a.country || 'HR',
+                        city: a.city || '',
+                        postalCode: a.postalCode || '',
+                        addressLine1: a.addressLine1 || '',
+                        addressLine2: a.addressLine2 || ''
+                    }));
+                    addressesList.innerHTML = '';
+                    addrs.forEach(a => addressesList.appendChild(renderAddressCard(a)));
+                } catch (e) {
+                    console.error('Failed to load user details', e);
+                }
+            } else {
+                // Firestore not available: prefill names from cached profile displayName
+                const { first: dnFirst, last: dnLast } = splitName(prof.displayName || '');
+                if (acFirst && !acFirst.value) acFirst.value = dnFirst || '';
+                if (acLast && !acLast.value) acLast.value = dnLast || '';
+                toggleCompanyUI();
+            }
+
+            // Add new address
+            el('addAddressBtn')?.addEventListener('click', () => {
+                const card = renderAddressCard({ id: String(Date.now()), useBilling: true, useShipping: true, isDefault: false });
+                addressesList.appendChild(card);
+            });
+
+            // Unified save: personal/company + addresses (store under users/{uid} only)
+            const saveAll = async () => {
+                if (!usersRef) return;
+                const firstName = (acFirst?.value || '').trim();
+                const lastName = (acLast?.value || '').trim();
+                const phone = (acPhone?.value || '').trim();
+                const displayName = [firstName, lastName].filter(Boolean).join(' ').trim();
+                let company = null;
+                if (hasCompany?.checked) {
+                    company = {
+                        name: (coName?.value || '').trim(),
+                        vatId: (coVat?.value || '').trim()
+                    };
+                }
+                const addresses = collectAddresses();
+                try {
+                    // Update auth display name
+                    if (auth && auth.currentUser && auth.currentUser.updateProfile) {
+                        await auth.currentUser.updateProfile({ displayName });
+                    }
+                    // Update users/{uid} with full profile (personal + company + addresses)
+                    await usersRef.set({ uid, displayName, firstName, lastName, phone, company, addresses, updatedAt: Date.now() }, { merge: true });
+                    // Update session cache
+                    const next = { ...prof, displayName };
+                    writeCachedProfile(next);
+                    if (titleEl) titleEl.textContent = displayName ? `Welcome, ${displayName}` : 'My Account';
+                    showMsg('account', true, 'Details saved.');
+                } catch (e) {
+                    console.error('Save details failed', e);
+                    showMsg('account', false, 'Could not save details.');
+                }
+            };
+            el('accountForm')?.addEventListener('submit', (ev) => { ev.preventDefault(); saveAll(); });
+            el('saveAllBtn')?.addEventListener('click', () => { saveAll(); });
+
+            // Save addresses removed; combined into saveAll()
+ 
             // Load orders for this user (query by uid and email, sort client-side)
             try {
                 const services = window.firebaseServices || {};
                 const db = services.db;
                 if (!db) throw new Error('Firestore not available');
-
+ 
                 const listEl = document.getElementById('ordersList');
                 const emptyEl = document.getElementById('ordersEmpty');
-
+ 
                 const resultsMap = new Map();
                 const tryFetch = async (query) => {
                     try { return await query.get(); } catch (e) { console.warn('Orders query failed:', e); return null; }
                 };
-
+ 
                 const byUidSnap = prof.uid ? await tryFetch(db.collection('orders').where('customerId', '==', prof.uid)) : null;
                 if (byUidSnap && !byUidSnap.empty) {
                     byUidSnap.docs.forEach(d => resultsMap.set(d.id, d));
                 }
-
+ 
                 if (prof.email) {
                     const byEmailSnap = await tryFetch(db.collection('orders').where('customer.email', '==', prof.email));
                     if (byEmailSnap && !byEmailSnap.empty) {
                         byEmailSnap.docs.forEach(d => resultsMap.set(d.id, d));
                     }
                 }
-
+ 
                 const docs = Array.from(resultsMap.values());
                 if (docs.length > 0) {
                     const rows = docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
@@ -175,11 +500,11 @@
                         return 0;
                     };
                     rows.sort((a, b) => toMs(b.data.createdAt) - toMs(a.data.createdAt));
-
+ 
                     if (emptyEl) emptyEl.style.display = 'none';
                     if (listEl) listEl.innerHTML = '';
                     if (listEl) listEl.style.display = '';
-
+ 
                     rows.forEach(({ id, data }) => {
                         const num = data.orderNumber || id;
                         const status = data.status || 'created';
