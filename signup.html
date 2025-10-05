@@ -28,6 +28,10 @@
         .auth-link:hover { text-decoration: underline; }
         .auth-error { color: #b91c1c; font-size: 0.85rem; min-height: 1.1rem; }
         #signinCard .auth-form { margin-top: 2rem; }
+        /* Stick footer to bottom (like success.html) */
+        html, body { height: 100%; }
+        body { display: flex; min-height: 100vh; flex-direction: column; }
+        .auth-main { flex: 1 0 auto; }
     </style>
 </head>
 <body class="auth-page store-page">

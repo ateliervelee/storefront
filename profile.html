@@ -13,7 +13,7 @@
         .profile-header img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
         .profile-title { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0; color: #222; }
         .profile-sub { color: #6b7280; margin: 0.25rem 0 0 0; }
-        .orders-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; background: #fff; }
+        .orders-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; background: #fff; margin-bottom: 1rem; }
         .orders-title { font-weight: 600; font-size: 1rem; margin: 0 0 0.4rem 0; }
         .orders-empty { color: #6b7280; }
         .orders-list { display: grid; gap: 0.75rem; }
@@ -85,6 +85,14 @@
             </div>
         </section>
 
+        <section class="orders-card">
+            <h2 class="orders-title">Your Orders</h2>
+            <div id="ordersContainer">
+                <p class="orders-empty" id="ordersEmpty">Loading your orders…</p>
+                <div class="orders-list" id="ordersList" style="display:none;"></div>
+            </div>
+        </section>
+
         <!-- Account details (merged) -->
         <section class="card" id="accountCard">
             <h2>Personal details</h2>
@@ -132,13 +140,7 @@
             </div>
         </section>
  
-        <section class="orders-card">
-            <h2 class="orders-title">Your Orders</h2>
-            <div id="ordersContainer">
-                <p class="orders-empty" id="ordersEmpty">Loading your orders…</p>
-                <div class="orders-list" id="ordersList" style="display:none;"></div>
-            </div>
-        </section>
+        
         <!-- Order details modal -->
         <div id="orderDialog" class="modal-backdrop">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="orderDialogTitle">
