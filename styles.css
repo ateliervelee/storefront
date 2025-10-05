@@ -184,6 +184,15 @@ p {
     color: var(--muted-gold);
 }
 
+/* Account/profile icon color (fallback icon uses currentColor) */
+.account-icon {
+    color: var(--warm-white);
+}
+
+.navbar.scrolled .account-icon {
+    color: var(--charcoal);
+}
+
 /* Navbar with background (when scrolled) */
 .navbar.scrolled {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);

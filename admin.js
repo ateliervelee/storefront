@@ -97,6 +97,108 @@ class AdminPanel {
         }
     }
 
+    initSizeChartEditor(root, product) {
+        try {
+            const container = root.querySelector('#sizeChartEditor');
+            if (!container) return;
+            const sizesWrap = container.querySelector('#sizeChartSizes');
+            const rowsWrap = container.querySelector('#sizeChartRows');
+            const emptyEl = container.querySelector('#sizeChartEmpty');
+            const addRowBtn = container.querySelector('#addSizeRowBtn');
+
+            const existingVariants = (product.variants || []);
+            const knownSizes = PRODUCT_CONSTANTS.sizes.map(s => s.value);
+            const productSizes = Array.from(new Set(existingVariants.map(v => v.size).filter(Boolean)));
+            const sizeList = (productSizes.length ? productSizes : knownSizes);
+
+            // Render size checkboxes
+            sizesWrap.innerHTML = sizeList.map(sz => {
+                const checked = product.sizeChart?.sizes ? product.sizeChart.sizes.includes(sz) : productSizes.length ? productSizes.includes(sz) : ['XS','S','M','L'].includes(sz);
+                return `<label class="checkbox-item"><input type="checkbox" name="sc-size" value="${sz}" ${checked ? 'checked' : ''}><span>${sz}</span></label>`;
+            }).join('');
+
+            // Render rows
+            const rows = Array.isArray(product.sizeChart?.rows) ? product.sizeChart.rows : [];
+            if (rows.length === 0) {
+                rowsWrap.innerHTML = '';
+                emptyEl.style.display = '';
+            } else {
+                emptyEl.style.display = 'none';
+                rowsWrap.innerHTML = rows.map((r, idx) => this.renderSizeChartRow(r, idx, sizeList)).join('');
+            }
+
+            // Add row handler
+            if (addRowBtn) {
+                addRowBtn.addEventListener('click', () => {
+                    emptyEl.style.display = 'none';
+                    const row = { label: '', values: {} };
+                    const html = this.renderSizeChartRow(row, Date.now(), sizeList);
+                    rowsWrap.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            // Delegate remove row
+            rowsWrap.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-remove-row]');
+                if (!btn) return;
+                const card = btn.closest('.sc-row');
+                if (card) card.remove();
+                if (rowsWrap.children.length === 0) emptyEl.style.display = '';
+            });
+
+        } catch (e) {
+            // no-op
+        }
+    }
+
+    renderSizeChartRow(row, key, sizes) {
+        const safeKey = String(key);
+        const values = row?.values || {};
+        const inputs = sizes.map(sz => {
+            const val = values[sz] ?? '';
+            return `<div class="form-group" style="min-width:120px;"><label>${sz}</label><input type="number" step="0.1" data-sc-val="${sz}" value="${val}"></div>`;
+        }).join('');
+        return `
+            <div class="sc-row" data-row-key="${safeKey}" style="border:1px solid var(--soft-beige); border-radius:8px; padding:1rem; margin-bottom:0.75rem; background: var(--warm-white);">
+                <div class="form-row">
+                    <div class="form-group" style="min-width:200px;">
+                        <label>Area</label>
+                        <input type="text" data-sc-label value="${row?.label || ''}" placeholder="e.g. Chest, Front Length">
+                    </div>
+                </div>
+                <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+                    ${inputs}
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-top:0.5rem;">
+                    <button type="button" class="btn-danger" data-remove-row>Remove Row</button>
+                </div>
+            </div>
+        `;
+    }
+
+    collectSizeChart(formRoot) {
+        try {
+            const sizes = Array.from(formRoot.querySelectorAll('input[name="sc-size"]:checked')).map(i => i.value);
+            const rows = Array.from(formRoot.querySelectorAll('#sizeChartRows .sc-row')).map(card => {
+                const label = (card.querySelector('[data-sc-label]')?.value || '').trim();
+                const values = {};
+                sizes.forEach(sz => {
+                    const inp = card.querySelector(`[data-sc-val="${sz}"]`);
+                    const v = inp ? inp.value.trim() : '';
+                    if (v !== '') {
+                        const num = Number(v);
+                        values[sz] = isNaN(num) ? v : num;
+                    }
+                });
+                return { label, values };
+            }).filter(r => r.label || Object.keys(r.values).length > 0);
+            if (sizes.length === 0 && rows.length === 0) return null;
+            return { sizes, rows };
+        } catch (e) {
+            return null;
+        }
+    }
+
     showLoginDialog() {
         const loginDialog = document.getElementById('loginDialog');
         const welcomeMessage = document.getElementById('welcomeMessage');
@@ -569,6 +671,22 @@ class AdminPanel {
                                 ${this.renderVariants(product.variants || [])}
                             </div>
                         </div>
+
+                        <!-- Size Chart (per product) -->
+                        <div class="form-section">
+                            <h3>Size Chart</h3>
+                            <div id="sizeChartEditor">
+                                <div class="form-group" style="margin-bottom:0.75rem;">
+                                    <label>Included Sizes</label>
+                                    <div id="sizeChartSizes" class="checkbox-group"></div>
+                                </div>
+                                <div class="form-group" style="margin:0.75rem 0 1rem;">
+                                    <button type="button" class="btn-secondary" id="addSizeRowBtn">Add Row</button>
+                                </div>
+                                <div id="sizeChartRows"></div>
+                                <div id="sizeChartEmpty" style="color: var(--deep-taupe); font-style: italic;">No size rows yet.</div>
+                            </div>
+                        </div>
                         
                         <div class="form-actions">
                             <button type="button" class="btn-secondary" id="cancelEdit">Cancel</button>
@@ -603,6 +721,9 @@ class AdminPanel {
 
         // Setup image gallery
         this.setupImageGallery();
+
+        // Initialize size chart editor
+        this.initSizeChartEditor(modal, product);
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -643,6 +764,7 @@ class AdminPanel {
                 status: form.querySelector('#productStatus').value,
                 tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
                 images: this.getSelectedImageNames(),
+                sizeChart: this.collectSizeChart(form),
                 updatedAt: new Date()
             };
 
@@ -1007,6 +1129,7 @@ class AdminPanel {
                 status: form.querySelector('#productStatus').value,
                 tags: form.querySelector('#productTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
                 images: this.getSelectedImageNames(),
+                sizeChart: this.collectSizeChart(form),
                 createdAt: new Date(),
                 updatedAt: new Date()
             };

@@ -43,12 +43,31 @@
         .muted { color: #6b7280; font-size: 0.9rem; }
         .addresses-list { display: grid; gap: 0.75rem; }
         .address-card { border: 1px solid #f3f4f6; border-radius: 10px; padding: 0.75rem; background: #fff; }
-        .address-header { display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+        .address-header { display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; cursor: default; }
+        .addr-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+        .addr-caret { display: inline-block; transition: transform 0.2s ease; }
+        .address-card.collapsed .addr-caret { transform: rotate(-90deg); }
+        .addr-title { font-weight: 600; color: #111827; }
+        .addr-body { padding-top: 0.5rem; }
+        .address-card.collapsed .addr-body { display: none; }
         .address-types { display: flex; gap: 0.75rem; align-items: center; }
         .flags { display: flex; gap: 1rem; align-items: center; }
         .hr { height: 1px; background: #f3f4f6; border: 0; margin: 0.75rem 0; }
         .notice { color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.5rem 0.6rem; border-radius: 8px; display: none; }
         .error { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; padding: 0.5rem 0.6rem; border-radius: 8px; display: none; }
+        /* Order dialog */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+        .modal { background: #fff; border-radius: 12px; width: min(640px, 92vw); max-height: 80vh; overflow: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1rem; border-bottom: 1px solid #f3f4f6; }
+        .modal-title { font-weight: 600; margin: 0; }
+        .modal-body { padding: 0.9rem 1rem; }
+        .order-items { display: grid; gap: 0.6rem; }
+        .order-item { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem; }
+        .order-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .order-item .meta { color: #6b7280; font-size: 0.9rem; }
+        .order-summary { display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; margin-top: 0.5rem; border-top: 1px solid #f3f4f6; font-weight: 600; }
+        .close-btn { background: #fff; color: #111; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer; }
+        .close-btn:hover { background: #f7f7f7; }
     </style>
 </head>
 <body class="profile-page store-page">
@@ -120,6 +139,23 @@
                 <div class="orders-list" id="ordersList" style="display:none;"></div>
             </div>
         </section>
+        <!-- Order details modal -->
+        <div id="orderDialog" class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="orderDialogTitle">
+                <div class="modal-header">
+                    <h3 id="orderDialogTitle" class="modal-title">Order details</h3>
+                    <button type="button" class="close-btn" id="orderDialogClose">Close</button>
+                </div>
+                <div class="modal-body">
+                    <div id="orderDialogStatus" class="muted" style="margin-bottom:0.5rem;"></div>
+                    <div id="orderDialogItems" class="order-items"></div>
+                    <div class="order-summary">
+                        <span>Total</span>
+                        <span id="orderDialogTotal"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
  
     <footer-placeholder></footer-placeholder>
@@ -264,10 +300,16 @@
             const renderAddressCard = (addr) => {
                 const id = addr.id || String(Date.now());
                 const wrapper = document.createElement('div');
-                wrapper.className = 'address-card';
+                wrapper.className = 'address-card collapsed';
                 wrapper.dataset.id = id;
                 wrapper.innerHTML = `
                     <div class="address-header">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <button type="button" class="addr-toggle" aria-expanded="false">
+                                <span class="addr-caret">▾</span>
+                                <span class="addr-title">${(addr.addressLine1 || 'New address').trim() || 'New address'}</span>
+                            </button>
+                        </div>
                         <div class="address-types">
                             <div class="form-row" style="min-width:110px;">
                                 <label>Billing</label>
@@ -283,7 +325,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-grid">
+                    <div class="addr-body">
+                        <div class="form-grid">
 
                         <div class="form-row full">
                             <label>Address line</label>
@@ -309,12 +352,30 @@
                             <label>Contact phone</label>
                             <input class="input addr-phone" type="tel" value="${addr.phone || ''}">
                         </div>
-                    </div>
-                    <hr class="hr"/>
-                    <div class="row-actions">
-                        <button type="button" class="btn secondary addr-remove">Remove</button>
+                        </div>
+                        <hr class="hr"/>
+                        <div class="row-actions">
+                            <button type="button" class="btn secondary addr-remove">Remove</button>
+                        </div>
                     </div>
                 `;
+                // Toggle collapse
+                const toggleBtn = wrapper.querySelector('.addr-toggle');
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', () => {
+                        const collapsed = wrapper.classList.toggle('collapsed');
+                        toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+                    });
+                }
+                // Update header title as user types
+                const line1 = wrapper.querySelector('.addr-line1');
+                const titleEl = wrapper.querySelector('.addr-title');
+                if (line1 && titleEl) {
+                    line1.addEventListener('input', () => {
+                        const val = (line1.value || '').trim();
+                        titleEl.textContent = val || 'New address';
+                    });
+                }
                 // Enforce single default per type (billing/shipping)
                 const def = wrapper.querySelector('.addr-default');
                 if (def) {
@@ -433,6 +494,12 @@
             el('addAddressBtn')?.addEventListener('click', () => {
                 const card = renderAddressCard({ id: String(Date.now()), useBilling: true, useShipping: true, isDefault: false });
                 addressesList.appendChild(card);
+                // Expand newly added address by default
+                try {
+                    card.classList.remove('collapsed');
+                    const toggleBtn = card.querySelector('.addr-toggle');
+                    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+                } catch {}
             });
 
             // Unified save: personal/company + addresses (store under users/{uid} only)
@@ -513,6 +580,17 @@
                     if (listEl) listEl.innerHTML = '';
                     if (listEl) listEl.style.display = '';
  
+                    // Helpers
+                    const humanizeStatus = (s) => {
+                        if (!s || typeof s !== 'string') return '';
+                        return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+                    };
+
+                    const formatMoney = (cents, currency = (rows[0]?.data?.currency || 'EUR')) => {
+                        try { return (cents / 100).toLocaleString(undefined, { style: 'currency', currency: (currency || 'EUR').toUpperCase() }); } catch { return `€${(cents/100).toFixed(2)}`; }
+                    };
+
+                    // Render rows
                     rows.forEach(({ id, data }) => {
                         const num = data.orderNumber || id;
                         const status = data.status || 'created';
@@ -524,12 +602,48 @@
                         row.innerHTML = `
                             <div>
                                 <div class="order-num">Order #${num}</div>
-                                <div class="order-status">${status}</div>
+                                <div class="order-status">${humanizeStatus(status)}</div>
                             </div>
                             <div class="order-total">${total}</div>
-                            <a href="thank-you.html?order=${encodeURIComponent(num)}" style="text-decoration:none;color:#111;">View</a>
+                            <button type="button" class="signout-btn view-order">View</button>
                         `;
                         listEl.appendChild(row);
+
+                        // Attach dialog opener
+                        const btn = row.querySelector('.view-order');
+                        if (btn) {
+                            btn.addEventListener('click', () => {
+                                try {
+                                    const items = Array.isArray(data.items) ? data.items : [];
+                                    const dialog = document.getElementById('orderDialog');
+                                    const title = document.getElementById('orderDialogTitle');
+                                    const statusEl = document.getElementById('orderDialogStatus');
+                                    const itemsEl = document.getElementById('orderDialogItems');
+                                    const totalEl = document.getElementById('orderDialogTotal');
+                                    if (!dialog || !title || !itemsEl || !totalEl) return;
+                                    title.textContent = `Order #${num}`;
+                                    statusEl.textContent = humanizeStatus(status);
+                                    itemsEl.innerHTML = '';
+                                    items.forEach((it) => {
+                                        const name = it.productName || it.name || 'Item';
+                                        const sku = it.variantSku || it.sku || '';
+                                        const unit = typeof it.unitPrice === 'number' ? formatMoney(it.unitPrice, currency) : '';
+                                        const div = document.createElement('div');
+                                        div.className = 'order-item';
+                                        div.innerHTML = `
+                                            <div>
+                                                <div>${name}</div>
+                                                <div class="meta">${sku}</div>
+                                            </div>
+                                            <div>${unit}</div>
+                                        `;
+                                        itemsEl.appendChild(div);
+                                    });
+                                    totalEl.textContent = formatMoney(totalCents, currency);
+                                    dialog.style.display = 'flex';
+                                } catch (e) { console.warn('Failed to open order dialog', e); }
+                            });
+                        }
                     });
                 } else {
                     if (emptyEl) { emptyEl.textContent = 'No orders yet.'; emptyEl.style.display = ''; }
@@ -539,6 +653,14 @@
                 if (emptyEl) emptyEl.textContent = 'Unable to load orders right now.';
                 console.error('Error loading orders:', err);
             }
+
+            // Dialog close handler
+            try {
+                const dlg = document.getElementById('orderDialog');
+                const closeBtn = document.getElementById('orderDialogClose');
+                if (closeBtn) closeBtn.addEventListener('click', () => { if (dlg) dlg.style.display = 'none'; });
+                if (dlg) dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.style.display = 'none'; });
+            } catch {}
         });
     </script>
 </body>

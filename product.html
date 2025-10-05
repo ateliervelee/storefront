@@ -85,6 +85,20 @@
                         <button id="addToCartBtn" style="flex: 1; padding: 0.9rem 1.1rem; border: none; border-radius: 10px; background: var(--charcoal, #2b2b2b); color: #fff; font-weight: 600; cursor: pointer; transition: var(--smooth);">Add to cart</button>
                     </div>
                 </div>
+
+                <div id="sizeChartContainer" style="margin-top:2rem; display:none;">
+                    <button id="sizeChartHeader" type="button" aria-expanded="false" style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.75rem 1rem; border:1px solid var(--soft-beige); background:#fff; border-radius:10px; cursor:pointer;">
+                        <span style="font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--charcoal);">Size chart (cm)</span>
+                        <span aria-hidden="true" id="sizeChartChevron" style="display:inline-flex; transition: transform .2s ease;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                    </button>
+                    <div id="sizeChartContent" style="max-height:0; overflow:hidden; transition:max-height .25s ease, opacity .25s ease; opacity:0;">
+                        <div id="sizeChartTableWrap" style="overflow-x:auto; margin-top:0.75rem;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -302,6 +316,66 @@
                 }
             }
 
+            function renderSizeChart(product) {
+                const root = document.getElementById('sizeChartContainer');
+                const wrap = document.getElementById('sizeChartTableWrap');
+                const content = document.getElementById('sizeChartContent');
+                const header = document.getElementById('sizeChartHeader');
+                const chevron = document.getElementById('sizeChartChevron');
+                if (!root || !wrap) return;
+                const chart = product?.sizeChart;
+                const sizes = Array.isArray(chart?.sizes) && chart.sizes.length ? chart.sizes : null;
+                const rows = Array.isArray(chart?.rows) ? chart.rows.filter(r => r && (r.label || (r.values && Object.keys(r.values).length))) : [];
+                if (!sizes || rows.length === 0) { root.style.display = 'none'; wrap.innerHTML = ''; return; }
+
+                const ths = ['Area', ...sizes].map(h => `<th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--soft-beige); white-space:nowrap;">${h}</th>`).join('');
+                const trs = rows.map(r => {
+                    const cells = sizes.map(sz => {
+                        const v = r.values?.[sz];
+                        return `<td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--soft-beige);">${(v ?? '')}</td>`;
+                    }).join('');
+                    return `<tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--soft-beige); font-weight:600;">${r.label || ''}</td>${cells}</tr>`;
+                }).join('');
+                wrap.innerHTML = `<table style="border-collapse:collapse; width:100%; background:#fff; border:1px solid var(--soft-beige); border-radius:8px; overflow:hidden;"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+                root.style.display = '';
+
+                // collapsed by default
+                if (content && header && chevron) {
+                    content.style.maxHeight = '0px';
+                    content.style.opacity = '0';
+                    header.setAttribute('aria-expanded', 'false');
+                    chevron.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            // Global toggle binding (works even if chart renders later)
+            (function setupSizeChartToggle(){
+                document.addEventListener('click', (e) => {
+                    const header = e.target.closest('#sizeChartHeader');
+                    if (!header) return;
+                    const container = document.getElementById('sizeChartContainer');
+                    const content = document.getElementById('sizeChartContent');
+                    const wrap = document.getElementById('sizeChartTableWrap');
+                    const chevron = document.getElementById('sizeChartChevron');
+                    if (!container || !content || !wrap || !chevron) return;
+                    if (container.style.display === 'none') return; // no chart
+                    const expanded = header.getAttribute('aria-expanded') === 'true';
+                    if (expanded) {
+                        header.setAttribute('aria-expanded', 'false');
+                        chevron.style.transform = 'rotate(0deg)';
+                        content.style.maxHeight = '0px';
+                        content.style.opacity = '0';
+                    } else {
+                        header.setAttribute('aria-expanded', 'true');
+                        chevron.style.transform = 'rotate(180deg)';
+                        // Recalculate height on each toggle
+                        const h = wrap.scrollHeight + 16;
+                        content.style.maxHeight = h + 'px';
+                        content.style.opacity = '1';
+                    }
+                });
+            })();
+
             addBtn.addEventListener('click', () => {
                 const product = window.pdState.product;
                 const variant = window.pdState.selectedVariant;
@@ -363,6 +437,7 @@
                 applyVariant(__effVariant);
                 updateAddButtonState(product);
                 if (addBtn) { addBtn.textContent = addBtn.disabled ? 'Sold out' : 'Add to cart'; }
+                renderSizeChart(product);
             }
 
             // 2) Optional: refresh from Firestore if we have explicit product id or slug
@@ -403,6 +478,7 @@
                         applyVariant(refreshed);
                         updateAddButtonState(product);
                         if (addBtn) { addBtn.textContent = addBtn.disabled ? 'Sold out' : 'Add to cart'; }
+                        renderSizeChart(product);
 
                         // Persist snapshot for speed on future navigations
                         try {
