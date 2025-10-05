@@ -22,7 +22,47 @@ export default {
       });
     }
 
-    // Only handle POST requests to /create-checkout-session
+    const url = new URL(request.url);
+    const pathname = url.pathname || '/';
+
+    // Stripe webhook (POST /stripe-webhook) – preferred for server-side email on payment success
+    if (pathname.endsWith('/stripe-webhook')) {
+      if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+      try {
+        const secret = env.STRIPE_WEBHOOK_SECRET;
+        if (!secret) return new Response('Missing STRIPE_WEBHOOK_SECRET', { status: 500 });
+        const raw = await request.text();
+        const sig = request.headers.get('stripe-signature') || request.headers.get('Stripe-Signature') || '';
+        const valid = await verifyStripeSignature(raw, sig, secret);
+        if (!valid) {
+          return new Response('Invalid signature', { status: 400 });
+        }
+        const event = JSON.parse(raw || '{}');
+        if (event && event.type === 'checkout.session.completed') {
+          const session = event.data && event.data.object ? event.data.object : {};
+          const toEmail = session.customer_details?.email || session.customer_email || '';
+          const orderId = (session.metadata && session.metadata.orderId) || session.id;
+          if (toEmail) {
+            const fromEmail = (env.MAIL_FROM || 'info@ateliervelee.com');
+            const fromName = (env.MAIL_FROM_NAME || 'Atelier Veleé');
+            const subject = `Potvrda narudžbe ${orderId ? '#' + orderId : ''}`;
+            const text = `Hvala Vam na vašoj kupnji. Vaša narudžba ${orderId ? '#' + orderId : ''} je zaprimljena i obraditi će se u najkraćem mogućem roku.`;
+            const html = `<p>Hvala Vam na vašoj kupnji.</p><p>Vaša narudžba <strong>${orderId ? '#' + orderId : ''}</strong> je zaprimljena i obraditi će se u najkraćem mogućem roku.</p>`;
+            const ok = await sendMail({ toEmail, fromEmail, fromName, subject, text, html });
+            if (!ok) {
+              // Let Stripe retry if email send failed
+              return new Response('Mail failed', { status: 500 });
+            }
+          }
+        }
+        return new Response('ok', { status: 200 });
+      } catch (e) {
+        console.log('Webhook error', e);
+        return new Response('Error', { status: 500 });
+      }
+    }
+
+    // Only handle POST requests to root for session creation
     if (request.method !== 'POST') {
       console.log('❌ Method not allowed:', request.method);
       return new Response('Method not allowed', { status: 405 });
@@ -170,6 +210,80 @@ function resolveFrontendOrigin(request, env) {
   } catch {
     return 'https://www.ateliervelee.com';
   }
+}
+
+// Utility JSON response with CORS
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    }
+  });
+}
+
+// Send email via MailChannels
+async function sendMail({ toEmail, fromEmail, fromName, subject, text, html }) {
+  try {
+    const payload = {
+      personalizations: [ { to: [ { email: toEmail } ] } ],
+      from: { email: fromEmail, name: fromName },
+      subject,
+      content: [
+        { type: 'text/plain', value: text || '' },
+        { type: 'text/html', value: html || '' }
+      ]
+    };
+    const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.log('MailChannels error', res.status, body);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.log('Mail send error', e);
+    return false;
+  }
+}
+
+// Verify Stripe webhook signature (HMAC SHA-256)
+async function verifyStripeSignature(rawBody, signatureHeader, secret) {
+  try {
+    // Header format: t=timestamp,v1=signature[,v1=...] 
+    const parts = Object.fromEntries(signatureHeader.split(',').map(kv => kv.split('=')));
+    const t = parts.t;
+    const v1 = parts.v1;
+    if (!t || !v1) return false;
+    const payload = `${t}.${rawBody}`;
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
+    const digestHex = [...new Uint8Array(sigBuf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    return timingSafeEqual(digestHex, v1);
+  } catch (e) {
+    return false;
+  }
+}
+
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let res = 0;
+  for (let i = 0; i < a.length; i++) {
+    res |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return res === 0;
 }
 
 // Helper function to flatten line items for URL encoding

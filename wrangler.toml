@@ -17,6 +17,9 @@ crons = []
 
 [vars]
 ALLOWED_ORIGIN = "https://www.ateliervelee.com"
+MAIL_FROM = "info@ateliervelee.com"
+MAIL_FROM_NAME = "Atelier Veleé"
+STRIPE_WEBHOOK_SECRET = "whsec_mRt6hISbdHHBDSM2CvVtrqCC2JTKzM4P"
 
 # Observability - Enable logging
 [observability.logs]
