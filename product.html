@@ -130,12 +130,25 @@
                 return map[key] || name;
             }
 
+        function titleCase(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/[-_]+/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+        }
+        function getCategoryLabel(value) {
+            const val = (value || '').toString();
+            const list = (window.PRODUCT_CONSTANTS && Array.isArray(window.PRODUCT_CONSTANTS.categories)) ? window.PRODUCT_CONSTANTS.categories : [];
+            const match = list.find(c => c.value === val);
+            return match ? match.label : (val ? titleCase(val) : 'Product');
+        }
+
         // In-memory page state
         window.pdState = { product: null, variants: [], selectedVariant: null, selectedColor: null, selectedSize: null, selectedImageIndex: 0 };
 
         document.addEventListener('allScriptsLoaded', async () => {
             const catEl = document.getElementById('pdBreadcrumbCategory');
-            const setCategory = (c) => { if (catEl) catEl.textContent = c || 'Product'; };
+            const setCategory = (c) => { if (catEl) catEl.textContent = getCategoryLabel(c); };
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
             const slugParam = params.get('slug');

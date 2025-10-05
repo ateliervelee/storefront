@@ -17,10 +17,13 @@
         .store-hero { padding: 7rem 0 2rem; background: #fff; }
         .store-title { font-family: 'Playfair Display', serif; font-size: 2.25rem; letter-spacing: 0.5px; }
         .store-sub { color: #6b7280; margin-top: 0.25rem; }
-        .store-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; gap: 1rem; }
+        .store-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; gap: 1rem; flex-wrap: wrap; }
         .store-meta .showing { color: #6b7280; font-size: 0.95rem; }
         .store-meta .sort { display: inline-flex; align-items: center; gap: 0.5rem; }
         .store-meta select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.6rem; padding-right: calc(0.6rem + 8px); background: #fff; }
+        .filters { display: inline-flex; align-items: center; gap: 0.5rem; }
+        .chip { border: 1px solid #e5e7eb; border-radius: 999px; padding: 0.35rem 0.75rem; background: #fff; cursor: pointer; font-size: 0.9rem; }
+        .chip.active { background: var(--charcoal); color: var(--warm-white); border-color: var(--charcoal); }
         .store-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
         .store-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
         @media (max-width: 639px) { .store-grid { grid-template-columns: 1fr; } }
@@ -46,6 +49,7 @@
                 <p class="store-sub">Discover the latest pieces in our collection</p>
                 <div class="store-meta">
                     <div class="showing">showing <span id="storeCount">0</span> products</div>
+                    <div class="filters" id="categoryFilters" aria-label="Filters"></div>
                     <label class="sort" for="storeSort">
                         <span>Sort by</span>
                         <select id="storeSort">
@@ -98,10 +102,16 @@
             let scheduled = false;
 
             const collect = () => { cards = Array.from(grid.querySelectorAll('.product-card')); };
-            const totalPages = () => Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
+            const normalizeCat = (s) => {
+                const x = (s || '').toLowerCase().trim();
+                if (!x) return '';
+                return x;
+            };
+            const visibleCardsNow = () => cards.filter(el => el.style.display !== 'none');
+            const totalPages = () => Math.max(1, Math.ceil(visibleCardsNow().length / PAGE_SIZE));
 
             function updateCount() {
-                if (countEl) countEl.textContent = String(cards.length);
+                if (countEl) countEl.textContent = String(visibleCardsNow().length);
             }
 
             function applySort() {
@@ -130,10 +140,25 @@
                 collect();
             }
 
+            let activeCategory = 'all';
+
+            function applyCategoryFilter() {
+                const chips = (document.getElementById('categoryFilters') || document).querySelectorAll('.chip');
+                chips.forEach(ch => ch.classList.toggle('active', ch.getAttribute('data-cat') === activeCategory));
+                const allCards = Array.from(grid.querySelectorAll('.product-card'));
+                allCards.forEach(el => {
+                    const cat = normalizeCat(el.dataset.category || '');
+                    const visible = (activeCategory === 'all') || (cat === activeCategory) || (normalizeCat(activeCategory) === cat);
+                    el.style.display = visible ? '' : 'none';
+                });
+            }
+
             const renderPage = () => {
                 const total = totalPages();
                 pager.style.display = '';
-                cards.forEach((el, idx) => {
+                // pagination applies only to visible cards per filter
+                const visibleCards = visibleCardsNow();
+                visibleCards.forEach((el, idx) => {
                     const pageIdx = Math.floor(idx / PAGE_SIZE) + 1;
                     el.style.display = pageIdx === currentPage ? '' : 'none';
                 });
@@ -166,13 +191,40 @@
             };
 
             const init = () => {
+                // Render category chips from constants
+                const wrap = document.getElementById('categoryFilters');
+                if (wrap && window.PRODUCT_CONSTANTS && Array.isArray(window.PRODUCT_CONSTANTS.categories)) {
+                    const html = ['<button class="chip active" data-cat="all">All</button>']
+                        .concat(window.PRODUCT_CONSTANTS.categories.map(c => `<button class="chip" data-cat="${c.value}">${c.label}</button>`))
+                        .join('');
+                    wrap.innerHTML = html;
+                }
                 collect();
                 applySort();
+                applyCategoryFilter();
                 renderPage();
             };
 
             if (sortSel) {
                 sortSel.addEventListener('change', () => {
+                    applySort();
+                    currentPage = 1;
+                    renderPage();
+                });
+            }
+
+            // Category filter events
+            // Category filter events (delegated)
+            const filtersWrap = document.getElementById('categoryFilters');
+            if (filtersWrap) {
+                filtersWrap.addEventListener('click', (e) => {
+                    const chip = e.target.closest('.chip');
+                    if (!chip) return;
+                    activeCategory = normalizeCat(chip.getAttribute('data-cat'));
+                    // Reset all to visible first, then filter and paginate
+                    grid.querySelectorAll('.product-card').forEach(el => el.style.display = '');
+                    applyCategoryFilter();
+                    collect();
                     applySort();
                     currentPage = 1;
                     renderPage();

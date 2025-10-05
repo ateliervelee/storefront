@@ -6,49 +6,48 @@ const PRODUCT_CONSTANTS = {
     // Image index JSON URL
     imageIndexUrl: 'https://raw.githubusercontent.com/ateliervelee/storefront/refs/heads/main/assets/images/index.json',
     categories: [
-        { value: 'dress', label: 'Dresses' },
+        { value: 'dress', label: 'Haljine' },
         { value: 'top', label: 'Tops' },
         { value: 'bottom', label: 'Bottoms' },
-        { value: 'outerwear', label: 'Outerwear' },
-        { value: 'accessory', label: 'Accessories' },
-        { value: 'footwear', label: 'Footwear' }
+        { value: 'bags', label: 'Torbe' },
+        //{ value: 'accessory', label: 'Dodaci' },
+        //{ value: 'footwear', label: 'Obuća' }
     ],
     
     sizes: [
-        { value: 'XS', label: 'Extra Small' },
-        { value: 'S', label: 'Small' },
-        { value: 'M', label: 'Medium' },
-        { value: 'L', label: 'Large' },
-        { value: 'XL', label: 'Extra Large' },
-        { value: 'XXL', label: '2X Large' }
+        { value: 'XXS', label: 'XXS' },
+        { value: 'XS', label: 'XS' },
+        { value: 'S', label: 'S' },
+        { value: 'M', label: 'M' },
+        { value: 'L', label: 'L' },
+        { value: 'XL', label: 'XL' },
+        { value: 'XXL', label: 'XXL' }
     ],
     
     colors: [
-        { value: 'black', label: 'Black' },
-        { value: 'white', label: 'White' },
+        { value: 'black', label: 'Crno' },
+        { value: 'white', label: 'Bijelo' },
         { value: 'navy', label: 'Navy' },
-        { value: 'red', label: 'Red' },
-        { value: 'blue', label: 'Blue' },
-        { value: 'green', label: 'Green' },
-        { value: 'pink', label: 'Pink' },
-        { value: 'beige', label: 'Beige' },
-        { value: 'brown', label: 'Brown' },
-        { value: 'gray', label: 'Gray' },
-        { value: 'gold', label: 'Gold' },
-        { value: 'yellow', label: 'Yellow' },
-        { value: 'silver', label: 'Silver' }
+        { value: 'red', label: 'Crveno' },
+        { value: 'blue', label: 'Plavo' },
+        { value: 'green', label: 'Zeleno' },
+        { value: 'pink', label: 'Rozo' },
+        { value: 'beige', label: 'Bež' },
+        { value: 'brown', label: 'Smeđe' },
+        { value: 'gray', label: 'Sivo' },
+        { value: 'gold', label: 'Zlatno' },
+        { value: 'yellow', label: 'Žuto' },
+        { value: 'silver', label: 'Srebrno' }
     ],
     
     currencies: [
         { value: 'EUR', label: 'EUR (€)' },
-        { value: 'USD', label: 'USD ($)' },
-        { value: 'GBP', label: 'GBP (£)' }
     ],
     
     statuses: [
-        { value: 'active', label: 'Active' },
-        { value: 'draft', label: 'Draft' },
-        { value: 'archived', label: 'Archived' }
+        { value: 'active', label: 'Aktivno' },
+        { value: 'draft', label: 'U izradi' },
+        { value: 'archived', label: 'Arhivirano' }
     ],
     
     // Countries and delivery (will be replaced with Firebase data later)
@@ -56,7 +55,7 @@ const PRODUCT_CONSTANTS = {
         {
             code: 'HR',
             name: 'Croatia',
-            deliveryFee: 0.00, // Free delivery in Croatia
+            deliveryFee: 10.00, // Free delivery in Croatia
             currency: 'EUR'
         }
         // More countries will be added via Firebase later
@@ -64,23 +63,23 @@ const PRODUCT_CONSTANTS = {
     
     // Order statuses
     orderStatuses: [
-        { value: 'pending_payment', label: 'Pending Payment' },
-        { value: 'payment_success', label: 'Payment Successful' },
-        { value: 'processing', label: 'Processing' },
-        { value: 'shipped', label: 'Shipped' },
-        { value: 'delivered', label: 'Delivered' },
-        { value: 'cancelled', label: 'Cancelled' },
-        { value: 'refunded', label: 'Refunded' },
-        { value: 'failed', label: 'Failed' }
+        { value: 'pending_payment', label: 'Potrebno plaćanje' },
+        { value: 'payment_success', label: 'Uplaćeno' },
+        { value: 'processing', label: 'Obrađuje se' },
+        { value: 'shipped', label: 'Poslano' },
+        { value: 'delivered', label: 'Dostavljeno' },
+        { value: 'cancelled', label: 'Odustalo' },
+        { value: 'refunded', label: 'Vraćena uplata' },
+        { value: 'failed', label: 'Neuspješno' }
     ],
     
     // Payment statuses
     paymentStatuses: [
-        { value: 'pending', label: 'Pending' },
-        { value: 'paid', label: 'Paid' },
-        { value: 'failed', label: 'Failed' },
-        { value: 'cancelled', label: 'Cancelled' },
-        { value: 'refunded', label: 'Refunded' }
+        { value: 'pending', label: 'Potrebno plaćanje' },
+        { value: 'paid', label: 'Plaćeno' },
+        { value: 'failed', label: 'Neuspješno' },
+        { value: 'cancelled', label: 'Odustalo' },
+        { value: 'refunded', label: 'Vraćena uplata' }
     ]
 };
 

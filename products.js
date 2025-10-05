@@ -123,6 +123,8 @@ class ProductsManager {
                             : (product.createdAtMs || (product.createdAtDate ? new Date(product.createdAtDate).getTime() : Date.now()));
             card.dataset.price = String(isFinite(minPrice) ? minPrice : 0);
             card.dataset.date = String(createdMs);
+            const cat = (product.category || product.type || product.collection || '').toString().toLowerCase();
+            if (cat) card.dataset.category = cat;
         } catch (e) {}
         
         // Get the smallest size variant for default selection
