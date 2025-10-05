@@ -59,11 +59,13 @@ export default {
 
       console.log('💳 Creating Stripe checkout session...');
       
+      // Resolve frontend origin for redirect URLs (dev vs prod)
+      const frontendOrigin = resolveFrontendOrigin(request, env);
       // Create Stripe checkout session with minimal address collection (none)
       const sessionParams = {
         'mode': 'payment',
-        'success_url': `https://www.ateliervelee.com/success.html?session_id={CHECKOUT_SESSION_ID}`,
-        'cancel_url': `https://www.ateliervelee.com/cancel.html`,
+        'success_url': `${frontendOrigin.replace(/\/$/, '')}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+        'cancel_url': `${frontendOrigin.replace(/\/$/, '')}/cancel.html`,
         ...flattenLineItems(line_items),
         // Intentionally not setting billing_address_collection or shipping_address_collection
         ...flattenMetadata(metadata || {}),
@@ -139,6 +141,35 @@ export default {
 function getOrigin(request) {
   const url = new URL(request.url);
   return `${url.protocol}//${url.host}`;
+}
+
+// Resolve the frontend origin for redirects. Prefer explicit env var, then request origin,
+// then Referer header, and finally default to production site.
+function resolveFrontendOrigin(request, env) {
+  try {
+    const prod = (env.ALLOWED_ORIGIN || 'https://www.ateliervelee.com').replace(/\/$/, '');
+    const headers = request.headers;
+    const origin = headers.get('Origin');
+    const referer = headers.get('Referer');
+    // Allow localhost during development
+    const prefer = origin || referer || '';
+    if (prefer) {
+      try {
+        const u = new URL(prefer);
+        // Only trust http(s)
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          // If localhost or 127.0.0.1 or *.local, use it
+          if (/^(localhost|127\.0\.0\.1|\[::1\]|.+\.local)$/i.test(u.hostname)) {
+            return `${u.protocol}//${u.host}`;
+          }
+        }
+      } catch {}
+    }
+    // Fallback to configured production origin
+    return prod;
+  } catch {
+    return 'https://www.ateliervelee.com';
+  }
 }
 
 // Helper function to flatten line items for URL encoding
