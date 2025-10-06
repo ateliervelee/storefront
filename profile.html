@@ -17,11 +17,12 @@
         .orders-title { font-weight: 600; font-size: 1rem; margin: 0 0 0.4rem 0; }
         .orders-empty { color: #6b7280; }
         .orders-list { display: grid; gap: 0.75rem; }
-        .order-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem; }
+        .order-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: start; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem; }
         .order-row:last-child { border-bottom: none; padding-bottom: 0; }
         .order-num { font-weight: 600; }
         .order-status { font-size: 0.875rem; color: #6b7280; }
         .order-total { font-weight: 600; }
+        .order-row .order-total, .order-row .view-order { align-self: end; }
         /* New: profile actions */
         .profile-actions { margin-top: 0.5rem; }
         .signout-btn { background: #fff; color: #111; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer; }
@@ -65,7 +66,11 @@
         .order-item { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem; }
         .order-item:last-child { border-bottom: none; padding-bottom: 0; }
         .order-item .meta { color: #6b7280; font-size: 0.9rem; }
-        .order-summary { display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; margin-top: 0.5rem; border-top: 1px solid #f3f4f6; font-weight: 600; }
+        .order-total-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center; padding-top: 0.5rem; margin-top: 0.5rem; border-top: 0; font-weight: 600; }
+        .order-addresses { display: grid; gap: 0.75rem; margin-bottom: 0.5rem; }
+        .addr-block { background: #fafafa; border: 1px solid #f3f4f6; border-radius: 8px; padding: 0.6rem 0.75rem; }
+        .addr-title { font-weight: 600; margin-bottom: 0.25rem; }
+        .addr-line { color: #6b7280; font-size: 0.9rem; }
         .close-btn { background: #fff; color: #111; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer; }
         .close-btn:hover { background: #f7f7f7; }
     </style>
@@ -145,15 +150,19 @@
         <div id="orderDialog" class="modal-backdrop">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="orderDialogTitle">
                 <div class="modal-header">
-                    <h3 id="orderDialogTitle" class="modal-title">Order details</h3>
-                    <button type="button" class="close-btn" id="orderDialogClose">Close</button>
+                    <h3 id="orderDialogTitle" class="modal-title">Narudžba</h3>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <button type="button" class="close-btn" id="orderDialogPrint">Preuzmi PDF</button>
+                        <button type="button" class="close-btn" id="orderDialogClose">Zatvori</button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div id="orderDialogStatus" class="muted" style="margin-bottom:0.5rem;"></div>
+                    <div id="orderDialogAddresses" class="order-addresses"></div>
                     <div id="orderDialogItems" class="order-items"></div>
-                    <div class="order-summary">
-                        <span>Total</span>
-                        <span id="orderDialogTotal"></span>
+                    <div class="order-total-row">
+                        <div>Ukupno</div>
+                        <div id="orderDialogTotal"></div>
                     </div>
                 </div>
             </div>
@@ -599,11 +608,14 @@
                         const totalCents = data.totalAmount || data.total || 0;
                         const currency = (data.currency || 'EUR').toUpperCase();
                         const total = (totalCents / 100).toLocaleString(undefined, { style: 'currency', currency });
+                        const createdMs = toMs(data.createdAt);
+                        const dateStr = createdMs ? new Date(createdMs).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
                         const row = document.createElement('div');
                         row.className = 'order-row';
                         row.innerHTML = `
                             <div>
                                 <div class="order-num">Order #${num}</div>
+                                ${dateStr ? `<div class=\"order-status\">${dateStr}</div>` : ''}
                                 <div class="order-status">${humanizeStatus(status)}</div>
                             </div>
                             <div class="order-total">${total}</div>
@@ -620,11 +632,47 @@
                                     const dialog = document.getElementById('orderDialog');
                                     const title = document.getElementById('orderDialogTitle');
                                     const statusEl = document.getElementById('orderDialogStatus');
+                                    const addressesEl = document.getElementById('orderDialogAddresses');
                                     const itemsEl = document.getElementById('orderDialogItems');
                                     const totalEl = document.getElementById('orderDialogTotal');
                                     if (!dialog || !title || !itemsEl || !totalEl) return;
-                                    title.textContent = `Order #${num}`;
+                                    title.textContent = `Narudžba #${num}`;
                                     statusEl.textContent = humanizeStatus(status);
+                                    // Addresses rendering (Croatian labels)
+                                    if (addressesEl) {
+                                        const billing = data.billing || {};
+                                        const shipping = data.shipping || null;
+                                        const company = data.company || null;
+                                        const formatAddress = (a) => [
+                                            [a.firstName, a.lastName].filter(Boolean).join(' '),
+                                            a.address,
+                                            a.addressDetails,
+                                            [a.postcode, a.city].filter(Boolean).join(' '),
+                                            a.country
+                                        ].filter(Boolean).join('\n');
+                                        const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                                        const billingLines = formatAddress(billing).split('\n').map(l => `<div class="addr-line">${esc(l)}</div>`).join('');
+                                        let companyLines = '';
+                                        if (company && (company.name || company.vatId)) {
+                                            companyLines = [
+                                                company.name ? `<div class="addr-line">${esc(company.name)}</div>` : '',
+                                                company.vatId ? `<div class="addr-line">OIB/VAT: ${esc(company.vatId)}</div>` : ''
+                                            ].join('');
+                                        }
+                                        const shippingLines = (shipping ? formatAddress(shipping) : formatAddress(billing)).split('\n').map(l => `<div class="addr-line">${esc(l)}</div>`).join('');
+
+                                        addressesEl.innerHTML = `
+                                            <div class="addr-block">
+                                                <div class="addr-title">Klijent</div>
+                                                ${companyLines}
+                                                ${billingLines}
+                                            </div>
+                                            <div class="addr-block">
+                                                <div class="addr-title">Dostava</div>
+                                                ${shippingLines}
+                                            </div>
+                                        `;
+                                    }
                                     itemsEl.innerHTML = '';
                                     items.forEach((it) => {
                                         const name = it.productName || it.name || 'Item';
@@ -642,6 +690,26 @@
                                         itemsEl.appendChild(div);
                                     });
                                     totalEl.textContent = formatMoney(totalCents, currency);
+                                    // Store details for PDF generation
+                                    try {
+                                        const orderForPdf = {
+                                            orderNumber: num,
+                                            status: humanizeStatus(status),
+                                            date: createdMs ? new Date(createdMs).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '',
+                                            currency,
+                                            totalCents: totalCents,
+                                            billing: data.billing || null,
+                                            shipping: data.shipping || null,
+                                            company: data.company || null,
+                                            items: items.map((it) => ({
+                                                name: it.productName || it.name || 'Item',
+                                                sku: it.variantSku || it.sku || '',
+                                                quantity: it.quantity || it.qty || 1,
+                                                unitPriceCents: (typeof it.unitPrice === 'number') ? it.unitPrice : (typeof it.price === 'number' ? it.price : 0)
+                                            }))
+                                        };
+                                        window.__currentOrderForPdf = orderForPdf;
+                                    } catch {}
                                     dialog.style.display = 'flex';
                                 } catch (e) { console.warn('Failed to open order dialog', e); }
                             });
@@ -660,8 +728,110 @@
             try {
                 const dlg = document.getElementById('orderDialog');
                 const closeBtn = document.getElementById('orderDialogClose');
+                const printBtn = document.getElementById('orderDialogPrint');
                 if (closeBtn) closeBtn.addEventListener('click', () => { if (dlg) dlg.style.display = 'none'; });
                 if (dlg) dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.style.display = 'none'; });
+                if (printBtn) {
+                    printBtn.addEventListener('click', async () => {
+                        try {
+                            const data = window.__currentOrderForPdf;
+                            if (!data) return;
+                            // Lazy-load jsPDF from CDN
+                            if (!window.jspdf) {
+                                await new Promise((resolve, reject) => {
+                                    const s = document.createElement('script');
+                                    s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+                                    s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+                                });
+                            }
+                            const { jsPDF } = window.jspdf || {};
+                            if (!jsPDF) return;
+                            const doc = new jsPDF();
+
+                            const line = (text, x, y, opt = {}) => doc.text(String(text || ''), x, y, opt);
+                            const mm = (v) => v; // default unit is mm
+
+                            let y = 20;
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(16);
+                            line('Narudžba', mm(20), y);
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(11);
+                            y += 8;
+                            line(`Broj narudžbe: ${data.orderNumber}`, mm(20), y);
+                            y += 6;
+                            line(`Status: ${data.status}`, mm(20), y);
+                            y += 6;
+                            if (data.date) { line(`Datum: ${data.date}`, mm(20), y); y += 8; }
+
+                            // Addresses
+                            const drawAddressBlock = (title, lines) => {
+                                if (!lines || !lines.length) return;
+                                if (y > 270) { doc.addPage(); y = 20; }
+                                doc.setFont('helvetica', 'bold');
+                                line(title, mm(20), y);
+                                y += 6;
+                                doc.setFont('helvetica', 'normal');
+                                lines.forEach((ln) => {
+                                    if (!ln) return;
+                                    if (y > 280) { doc.addPage(); y = 20; }
+                                    line(String(ln), mm(20), y);
+                                    y += 5;
+                                });
+                                y += 4;
+                            };
+
+                            const fmtAddr = (a) => {
+                                if (!a) return [];
+                                const lines = [];
+                                const fullName = [a.firstName, a.lastName].filter(Boolean).join(' ');
+                                if (fullName) lines.push(fullName);
+                                if (a.address) lines.push(a.address);
+                                if (a.addressDetails) lines.push(a.addressDetails);
+                                const cityLine = [a.postcode, a.city].filter(Boolean).join(' ');
+                                if (cityLine) lines.push(cityLine);
+                                if (a.country) lines.push(a.country);
+                                return lines;
+                            };
+
+                            const billingLines = fmtAddr(data.billing);
+                            const shippingLines = fmtAddr(data.shipping || data.billing);
+                            if (data.company && (data.company.name || data.company.vatId)) {
+                                if (data.company.name) billingLines.unshift(String(data.company.name));
+                                if (data.company.vatId) billingLines.splice(1, 0, `OIB/VAT: ${data.company.vatId}`);
+                            }
+
+                            drawAddressBlock('Klijent', billingLines);
+                            drawAddressBlock('Dostava', shippingLines);
+
+                            // Items header
+                            doc.setFont('helvetica', 'bold');
+                            line('Stavke', mm(20), y);
+                            y += 6;
+                            doc.setFont('helvetica', 'normal');
+                            const currency = data.currency || 'EUR';
+                            const fmt = (cents) => {
+                                try { return (cents / 100).toLocaleString(undefined, { style: 'currency', currency }); } catch { return `${currency} ${(cents/100).toFixed(2)}`; }
+                            };
+                            data.items.forEach((it) => {
+                                if (y > 270) { doc.addPage(); y = 20; }
+                                line(`${it.name} ${it.sku ? '('+it.sku+')' : ''}`, mm(20), y);
+                                line(`x${it.quantity}`, mm(160), y);
+                                line(fmt(it.unitPriceCents), mm(180), y, { align: 'right' });
+                                y += 6;
+                            });
+
+                            y += 6;
+                            doc.setFont('helvetica', 'bold');
+                            line('Ukupno:', mm(150), y);
+                            line(fmt(data.totalCents), mm(180), y, { align: 'right' });
+
+                            doc.save(`order-${data.orderNumber}.pdf`);
+                        } catch (e) {
+                            console.warn('PDF generation failed', e);
+                        }
+                    });
+                }
             } catch {}
         });
     </script>
